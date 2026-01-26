@@ -54,34 +54,29 @@
             padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
         }
 
+        .post-content { padding: 15px; }
         .post-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 8px; }
         .post-body { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 10px; white-space: pre-wrap; }
         
-        .post-media {
-            width: 100%;
-            margin-top: 10px;
-        }
-
+        .post-media { width: 100%; margin: 0; }
         .post-media img {
             width: 100%;
-            border-radius: 10px;
             display: block;
-            background: #f8f8f8;
+            background: #eee;
         }
 
         .video-wrapper {
             width: 100%;
-            margin-top: 10px;
-            border-radius: 10px;
-            overflow: hidden;
             background: #000;
+            line-height: 0;
         }
 
         .video-container {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 ratio */
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
             height: 0;
         }
 
@@ -95,6 +90,7 @@
             font-size: 11px;
             color: #999;
             margin-top: 10px;
+            padding: 0 15px 15px 15px;
             text-align: right;
         }
 
@@ -111,7 +107,7 @@
     </div>
 
     <div id="feed" class="feed-container">
-        <div id="loading">ප්‍රෝෆයිලය පරීක්ෂා කරමින්...</div>
+        <div id="loading">දත්ත පරීක්ෂා කරමින්...</div>
     </div>
 
     <script type="module">
@@ -180,7 +176,6 @@
                     const post = postDoc.data();
                     
                     let isRelevant = false;
-                    // Target check with flexibility for string/number types
                     if (post.targetType === 'all' || post.targetValue === 'global') isRelevant = true;
                     if (post.targetType === 'grade' && String(post.targetValue) === String(grade)) isRelevant = true;
                     if (post.targetType === 'class' && String(post.targetValue) === String(classKey)) isRelevant = true;
@@ -192,8 +187,8 @@
                 });
 
                 postsArray.sort((a, b) => {
-                    const dateA = a.createdAt ? (a.createdAt.seconds || 0) : 0;
-                    const dateB = b.createdAt ? (b.createdAt.seconds || 0) : 0;
+                    const dateA = (a.createdAt && a.createdAt.seconds) ? a.createdAt.seconds : 0;
+                    const dateB = (b.createdAt && b.createdAt.seconds) ? b.createdAt.seconds : 0;
                     return dateB - dateA;
                 });
 
@@ -209,14 +204,14 @@
             const feedEl = document.getElementById('feed');
             const postDate = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : 'Just now';
 
-            // දත්ත ලබාගැනීමේදී විවිධ ෆීල්ඩ් නම් පරීක්ෂා කිරීම (Case-insensitive behavior)
-            const videoUrl = post.videoUrl || post.video || post.videourl || "";
-            const imageUrl = post.imageUrl || post.image || post.imageurl || "";
-            const bodyText = post.body || post.message || post.description || "";
+            // දත්ත පරීක්ෂාව - fields කිහිපයක්ම බලනවා
+            const videoUrl = (post.videoUrl || post.video || "").trim();
+            const imageUrl = (post.imageUrl || post.image || "").trim();
+            const bodyText = (post.body || post.message || post.description || "");
 
-            // YouTube Video
+            // YouTube Video Logic
             let videoHTML = '';
-            if (videoUrl.trim() !== "") {
+            if (videoUrl !== "") {
                 const videoId = extractYouTubeId(videoUrl);
                 if (videoId) {
                     videoHTML = `
@@ -225,6 +220,7 @@
                                 <iframe 
                                     src="https://www.youtube.com/embed/${videoId}?rel=0" 
                                     frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                     allowfullscreen>
                                 </iframe>
                             </div>
@@ -232,24 +228,26 @@
                 }
             }
 
-            // Image Display
+            // Image Display Logic
             let imageHTML = '';
-            if (imageUrl.trim() !== "") {
-                let finalImgUrl = imageUrl.trim();
+            if (imageUrl !== "") {
+                let finalImgUrl = imageUrl;
                 if(finalImgUrl.includes('drive.google.com')){
                     const driveIdMatch = finalImgUrl.match(/[-\w]{25,}/);
                     if (driveIdMatch) {
                         finalImgUrl = `https://docs.google.com/uc?export=view&id=${driveIdMatch[0]}`;
                     }
                 }
-                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Media" onerror="this.parentElement.style.display='none'"></div>`;
+                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Media" onerror="this.style.display='none'"></div>`;
             }
 
             const postCard = document.createElement('div');
             postCard.className = 'post-card';
             postCard.innerHTML = `
-                <div class="post-title">${post.title || 'අලුත් පණිවිඩයක්'}</div>
-                <div class="post-body">${bodyText}</div>
+                <div class="post-content">
+                    <div class="post-title">${post.title || 'පණිවිඩයක්'}</div>
+                    <div class="post-body">${bodyText}</div>
+                </div>
                 ${imageHTML}
                 ${videoHTML}
                 <div class="post-date">${postDate}</div>
