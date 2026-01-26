@@ -57,12 +57,13 @@
         }
 
         .post-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 8px; }
-        .post-body { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 10px; }
+        .post-body { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 10px; white-space: pre-wrap; }
         
         .post-media img {
             width: 100%;
             border-radius: 10px;
             margin-top: 10px;
+            display: block;
         }
 
         .video-container {
@@ -147,7 +148,7 @@
                     document.getElementById('loading').innerHTML = "❌ ශිෂ්‍යයා සොයාගත නොහැක.";
                 }
             } catch (e) {
-                console.error(e);
+                console.error("Student load error:", e);
                 document.getElementById('loading').innerHTML = "❌ දත්ත ලබාගැනීමේදී දෝෂයක් සිදු විය.";
             }
         }
@@ -156,7 +157,7 @@
             const feedEl = document.getElementById('feed');
             const classKey = `${grade}-${classGroup}`;
 
-            // Error වැලැක්වීම සඳහා orderBy ඉවත් කර පෝස්ට් කියවනවා
+            // පෝස්ට් කියවීම සඳහා collection එකට සෘජුවම සවන් දෙනවා
             const q = collection(db, "posts");
 
             onSnapshot(q, (snapshot) => {
@@ -171,7 +172,7 @@
                     const post = postDoc.data();
                     
                     let isRelevant = false;
-                    if (post.targetType === 'all') isRelevant = true;
+                    if (post.targetType === 'all' || post.targetValue === 'global') isRelevant = true;
                     if (post.targetType === 'grade' && post.targetValue === grade) isRelevant = true;
                     if (post.targetType === 'class' && post.targetValue === classKey) isRelevant = true;
                     if (post.targetType === 'individual' && post.targetValue === studentId) isRelevant = true;
@@ -181,10 +182,10 @@
                     }
                 });
 
-                // පෝස්ට් ටික අලුත්ම ඒවා මුලට එන විදිහට JavaScript වලින් Sort කරනවා
+                // කාලය අනුව පෝස්ට් පිළිවෙලට සැකසීම (Sorting)
                 postsArray.sort((a, b) => {
-                    const dateA = a.createdAt ? a.createdAt.seconds : 0;
-                    const dateB = b.createdAt ? b.createdAt.seconds : 0;
+                    const dateA = a.createdAt ? (a.createdAt.seconds || 0) : 0;
+                    const dateB = b.createdAt ? (b.createdAt.seconds || 0) : 0;
                     return dateB - dateA;
                 });
 
@@ -194,33 +195,45 @@
                     feedEl.innerHTML = '<div class="no-posts">තවමත් අලුත් පණිවිඩ කිසිවක් නැත.</div>';
                 }
             }, (error) => {
-                console.error("Feed error:", error);
-                document.getElementById('loading').innerHTML = "❌ පෝස්ට් ලෝඩ් කිරීමේදී දෝෂයක් සිදු විය.";
+                console.error("Post sync error:", error);
+                document.getElementById('loading').innerHTML = "❌ පෝස්ට් සමගාමී කිරීමේදී දෝෂයක් සිදු විය.";
             });
         }
 
         function renderPost(post) {
             const feedEl = document.getElementById('feed');
-            const postDate = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleDateString() : 'Just now';
+            const postDate = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : 'Just now';
 
+            // YouTube Video Player
             let videoHTML = '';
-            if (post.videoUrl) {
-                let videoId = extractYouTubeId(post.videoUrl);
+            if (post.videoUrl && post.videoUrl.trim() !== "") {
+                const videoId = extractYouTubeId(post.videoUrl);
                 if (videoId) {
                     videoHTML = `
                         <div class="video-container">
-                            <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+                            <iframe 
+                                src="https://www.youtube.com/embed/${videoId}?rel=0" 
+                                title="YouTube video player" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
                         </div>`;
                 }
             }
 
+            // Image Display
             let imageHTML = '';
-            if (post.imageUrl) {
+            if (post.imageUrl && post.imageUrl.trim() !== "") {
                 let finalImgUrl = post.imageUrl;
+                // Google Drive ලින්ක් එක කෙලින්ම පින්තූරයක් ලෙස පෙන්වීමට පරිවර්තනය කිරීම
                 if(finalImgUrl.includes('drive.google.com')){
-                    finalImgUrl = finalImgUrl.replace('/view?usp=sharing', '').replace('file/d/', 'uc?export=view&id=').replace('/view', '');
+                    const driveIdMatch = finalImgUrl.match(/[-\w]{25,}/);
+                    if (driveIdMatch) {
+                        finalImgUrl = `https://docs.google.com/uc?export=view&id=${driveIdMatch[0]}`;
+                    }
                 }
-                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" onerror="this.style.display='none'"></div>`;
+                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Image" onerror="this.style.display='none'"></div>`;
             }
 
             const postCard = document.createElement('div');
@@ -235,10 +248,11 @@
             feedEl.appendChild(postCard);
         }
 
+        // විවිධ වර්ගයේ YouTube ලින්ක් වලින් ID එක ලබාගැනීම
         function extractYouTubeId(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?\??v?=?))([^#\&\?]*).*/;
             const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
+            return (match && match[7].length === 11) ? match[7] : null;
         }
     </script>
 </body>
