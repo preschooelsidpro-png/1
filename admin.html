@@ -17,7 +17,7 @@
             margin: 0 auto;
         }
 
-        /* කාඩ් ඩිසයින් එක */
+        /* Card Design */
         .card {
             background: white;
             padding: 25px;
@@ -28,7 +28,7 @@
 
         h2, h3 { color: #333; margin-top: 0; }
         
-        /* ෆෝම් පෙනුම */
+        /* Form Styling */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -61,8 +61,9 @@
         .btn-primary:hover { background-color: #0056b3; }
         
         .btn-danger { background-color: #dc3545; padding: 5px 10px; font-size: 14px; }
+        .btn-warning { background-color: #ffc107; color: #000; padding: 5px 10px; font-size: 14px; margin-right: 5px; }
 
-        /* ටේබල් ඩිසයින් එක */
+        /* Table Styling */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -73,6 +74,16 @@
         
         .hidden { display: none; }
         #statusMsg { text-align: center; margin-top: 10px; font-weight: bold; }
+
+        .post-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .post-info { flex-grow: 1; }
+        .post-meta { font-size: 12px; color: #888; }
     </style>
 </head>
 <body>
@@ -142,18 +153,25 @@
                 </div>
 
                 <div>
-                    <label>Image URL (Optional)</label>
-                    <input type="url" id="contentImage" placeholder="Google Drive Link">
+                    <label>Image URL (Dropbox/Drive)</label>
+                    <input type="url" id="contentImage" placeholder="Paste Link here">
                 </div>
 
                 <div>
-                    <label>Video URL (Optional)</label>
-                    <input type="url" id="contentVideo" placeholder="YouTube Link">
+                    <label>Video URL (YouTube)</label>
+                    <input type="url" id="contentVideo" placeholder="Paste YouTube Link here">
                 </div>
             </div>
 
             <button class="btn-primary" id="sendBtn">🚀 Send Update</button>
             <div id="statusMsg"></div>
+        </div>
+
+        <!-- RECENT POSTS SECTION -->
+        <div class="card">
+            <h3>🕒 Recent Updates (කලින් යැවූ පණිවිඩ)</h3>
+            <div id="postsLoading">Loading updates...</div>
+            <div id="postsList"></div>
         </div>
 
         <!-- STUDENT LIST SECTION -->
@@ -177,7 +195,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -199,7 +217,6 @@
             const gradeInput = document.getElementById('inputGrade');
             const classInput = document.getElementById('inputClass');
 
-            // Reset visibility
             studentInput.classList.add('hidden');
             gradeInput.classList.add('hidden');
             classInput.classList.add('hidden');
@@ -212,11 +229,8 @@
             } else if (type === 'grade') {
                 gradeInput.classList.remove('hidden');
             }
-            // 'all' needs no extra inputs
         };
-        // Run once on load
         toggleInputs();
-
 
         // --- SEND CONTENT LOGIC ---
         document.getElementById('sendBtn').addEventListener('click', async () => {
@@ -233,17 +247,15 @@
             }
 
             let targetValue = "";
-            
-            // Determine target value based on selection
             if (type === 'individual') {
                 targetValue = document.getElementById('targetId').value.trim();
                 if(!targetValue) return alert("Enter Student ID");
             } else if (type === 'class') {
                 const g = document.getElementById('targetGrade').value;
                 const c = document.getElementById('targetClass').value;
-                targetValue = `${g}-${c}`; // Ex: "5-A"
+                targetValue = `${g}-${c}`;
             } else if (type === 'grade') {
-                targetValue = document.getElementById('targetGrade').value; // Ex: "5"
+                targetValue = document.getElementById('targetGrade').value;
             } else {
                 targetValue = "global";
             }
@@ -251,10 +263,8 @@
             msgEl.textContent = "Sending...";
             
             try {
-                // We save these updates to a separate collection called 'posts'
-                // The student profile page will read from this collection later
                 await addDoc(collection(db, "posts"), {
-                    targetType: type,   // individual, class, grade, all
+                    targetType: type,
                     targetValue: targetValue, 
                     title: title,
                     body: body,
@@ -266,7 +276,6 @@
                 msgEl.textContent = "✅ Update Sent Successfully!";
                 msgEl.style.color = "green";
                 
-                // Clear content fields
                 document.getElementById('contentTitle').value = '';
                 document.getElementById('contentBody').value = '';
                 document.getElementById('contentImage').value = '';
@@ -279,6 +288,43 @@
             }
         });
 
+        // --- RECENT POSTS / DELETE LOGIC ---
+        const postsList = document.getElementById('postsList');
+        const postsLoading = document.getElementById('postsLoading');
+
+        const postsQuery = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(20));
+        onSnapshot(postsQuery, (snapshot) => {
+            postsList.innerHTML = '';
+            if (snapshot.empty) {
+                postsList.innerHTML = '<p style="color:#999;">No recent updates found.</p>';
+            }
+            snapshot.forEach((postDoc) => {
+                const post = postDoc.data();
+                const postId = postDoc.id;
+                
+                const div = document.createElement('div');
+                div.className = 'post-item';
+                div.innerHTML = `
+                    <div class="post-info">
+                        <strong>${post.title}</strong><br>
+                        <span class="post-meta">Target: ${post.targetType} (${post.targetValue})</span>
+                    </div>
+                    <button class="btn-danger" onclick="deletePost('${postId}')">Delete</button>
+                `;
+                postsList.appendChild(div);
+            });
+            postsLoading.style.display = 'none';
+        });
+
+        window.deletePost = async (id) => {
+            if(confirm("Are you sure you want to delete this update?")) {
+                try {
+                    await deleteDoc(doc(db, "posts", id));
+                } catch (e) {
+                    alert("Error deleting post");
+                }
+            }
+        };
 
         // --- STUDENT LIST LOGIC ---
         const tableBody = document.getElementById('tableBody');
@@ -297,7 +343,7 @@
                     <td>${data.grade} - ${data.classGroup || '?'}</td>
                     <td style="font-family:monospace; font-size:12px;">${id}</td>
                     <td>
-                        <button class="btn-danger" onclick="copyId('${id}')">Copy ID</button>
+                        <button class="btn-warning" onclick="copyId('${id}')">Copy ID</button>
                     </td>
                 `;
                 tableBody.appendChild(tr);
@@ -305,7 +351,6 @@
             loading.style.display = 'none';
         });
 
-        // Helper to copy ID for individual updates
         window.copyId = (id) => {
             document.getElementById('targetType').value = 'individual';
             toggleInputs();
