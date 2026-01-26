@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISIA Student Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 50px; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            width: 95%;
+            max-width: 500px;
+            margin: 20px auto;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            height: 120px;
+            position: relative;
+        }
+
+        .photo-container {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 5px solid white;
+            position: absolute;
+            bottom: -55px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .photo-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        .feed-container { width: 95%; max-width: 500px; margin: 0 auto; }
+
+        .post-card {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #000;
+            margin: 10px 0;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        .post-img {
+            width: 100%;
+            border-radius: 12px;
+            margin: 10px 0;
+            max-height: 300px;
+            object-fit: cover;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="loading" class="flex flex-col items-center justify-center min-h-screen">
+        <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        <p class="mt-4 text-slate-500">දත්ත ලබා ගනිමින් පවතී...</p>
+    </div>
+
+    <div id="error-message" class="hidden flex flex-col items-center justify-center min-h-screen p-6 text-center">
+        <div class="text-red-500 text-5xl mb-4">⚠️</div>
+        <h2 class="text-xl font-bold text-slate-800">ශිෂ්‍යයා හඳුනාගත නොහැක</h2>
+        <p class="text-slate-500 mt-2">කරුණාකර NFC කාඩ්පත නැවත පරීක්ෂා කරන්න හෝ නිවැරදි ලින්ක් එක භාවිතා කරන්න.</p>
+    </div>
+
+    <div id="main-content" class="hidden">
+        <!-- Profile Header -->
+        <div class="glass-card">
+            <div class="header-gradient">
+                <div class="photo-container">
+                    <img id="studentPhoto" src="https://via.placeholder.com/150" alt="Student">
+                </div>
+            </div>
+            <div class="pt-16 pb-6 px-6 text-center">
+                <h1 id="studentName" class="text-xl font-bold text-slate-800">Student Name</h1>
+                <div class="flex justify-center gap-2 mt-2">
+                    <span id="studentGrade" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">Grade -</span>
+                    <span id="studentClass" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">Class -</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Updates Feed -->
+        <div class="feed-container">
+            <h2 class="text-lg font-bold text-slate-700 mb-4 px-2">Updates & Media</h2>
+            <div id="postsList" class="space-y-4">
+                <!-- Posts will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
+            authDomain: "isia-4324b.firebaseapp.com",
+            projectId: "isia-4324b",
+            storageBucket: "isia-4324b.firebasestorage.app",
+            messagingSenderId: "981887431122",
+            appId: "1:981887431122:web:8e96c34367cb4228ff980b",
+            measurementId: "G-10N2QR8W12"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentId = urlParams.get('id');
+
+        async function init() {
+            if (!studentId) {
+                showError();
+                return;
+            }
+
+            try {
+                const docSnap = await getDoc(doc(db, "students", studentId));
+                if (docSnap.exists()) {
+                    const studentData = docSnap.data();
+                    displayProfile(studentData);
+                    loadPosts(studentId, studentData.grade, studentData.classGroup);
+                } else {
+                    showError();
+                }
+            } catch (e) { 
+                console.error(e); 
+                showError();
+            }
+        }
+
+        function showError() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-message').classList.remove('hidden');
+        }
+
+        function displayProfile(data) {
+            document.getElementById('studentName').textContent = data.name;
+            document.getElementById('studentGrade').textContent = "Grade " + data.grade;
+            document.getElementById('studentClass').textContent = "Class " + (data.classGroup || 'A');
+            if (data.photoUrl) document.getElementById('studentPhoto').src = data.photoUrl;
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('main-content').classList.remove('hidden');
+        }
+
+        function loadPosts(id, grade, cls) {
+            const postsList = document.getElementById('postsList');
+            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                postsList.innerHTML = '';
+                snapshot.forEach((postDoc) => {
+                    const post = postDoc.data();
+                    
+                    const isGlobal = post.targetType === 'all';
+                    const isForMyGrade = post.targetType === 'grade' && post.targetValue === grade;
+                    const isForMyClass = post.targetType === 'class' && post.targetValue === `${grade}-${cls}`;
+                    const isForMe = post.targetType === 'individual' && post.targetValue === id;
+
+                    if (isGlobal || isForMyGrade || isForMyClass || isForMe) {
+                        renderPost(post);
+                    }
+                });
+
+                if (postsList.innerHTML === '') {
+                    postsList.innerHTML = '<p class="text-center text-slate-400 py-10">තවමත් අලුත් යාවත්කාලීන කිරීම් නැත.</p>';
+                }
+            });
+        }
+
+        function renderPost(post) {
+            const container = document.getElementById('postsList');
+            const card = document.createElement('div');
+            card.className = 'post-card';
+
+            let mediaHtml = '';
+            
+            if (post.videoUrl) {
+                const videoId = extractYoutubeId(post.videoUrl);
+                if (videoId) {
+                    mediaHtml = `<div class="video-container">
+                        <iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>
+                    </div>`;
+                }
+            } else if (post.imageUrl) {
+                mediaHtml = `<img src="${post.imageUrl}" class="post-img" alt="post image" onerror="this.style.display='none'">`;
+            }
+
+            card.innerHTML = `
+                <h3 class="font-bold text-slate-800">${post.title}</h3>
+                <p class="text-sm text-slate-600 mt-1">${post.body || ''}</p>
+                ${mediaHtml}
+                <div class="text-[10px] text-slate-400 mt-2">${post.createdAt ? new Date(post.createdAt.toDate()).toLocaleDateString() : 'Just now'}</div>
+            `;
+            container.appendChild(card);
+        }
+
+        function extractYoutubeId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        init();
+    </script>
+</body>
+</html>
