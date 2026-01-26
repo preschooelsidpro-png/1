@@ -68,7 +68,7 @@
             background: #eee;
         }
 
-        /* Video Styling */
+        /* Fixed Video Container for Better Compatibility */
         .video-wrapper {
             width: 100%;
             background: #000;
@@ -76,7 +76,7 @@
 
         .video-container {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 ratio */
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
             height: 0;
             overflow: hidden;
         }
@@ -152,21 +152,26 @@
                     document.getElementById('displayName').textContent = data.name || 'Unknown Student';
                     document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo || '--'} | Grade: ${data.grade || '--'}-${data.classGroup || '--'}`;
                     
-                    let studentPhoto = data.photoUrl || "";
-                    if (studentPhoto.includes('dropbox.com')) {
-                        studentPhoto = studentPhoto.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
-                    }
-                    
+                    let studentPhoto = (data.photoUrl || "").trim();
                     const photoImg = document.getElementById('displayPhoto');
+                    
                     photoImg.onerror = () => { photoImg.src = fallbackSVG; };
-                    photoImg.src = studentPhoto || fallbackSVG;
+
+                    if (studentPhoto && studentPhoto !== "" && studentPhoto !== "undefined") {
+                        if (studentPhoto.includes('dropbox.com')) {
+                            studentPhoto = studentPhoto.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
+                        }
+                        photoImg.src = studentPhoto;
+                    } else {
+                        photoImg.src = fallbackSVG;
+                    }
 
                     loadPostsOnce(data.grade, data.classGroup);
                 } else {
                     document.getElementById('loading').innerHTML = "❌ ශිෂ්‍යයා සොයාගත නොහැක.";
                 }
             } catch (e) {
-                console.error(e);
+                console.error("Firestore Error:", e);
                 document.getElementById('loading').innerHTML = "❌ දෝෂයකි.";
             }
         }
@@ -192,6 +197,7 @@
                     if (isRelevant) postsArray.push(post);
                 });
 
+                // Sort by time
                 postsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
                 if (postsArray.length > 0) {
@@ -218,7 +224,13 @@
                     videoHTML = `
                         <div class="video-wrapper">
                             <div class="video-container">
-                                <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+                                <iframe 
+                                    src="https://www.youtube.com/embed/${videoId}?rel=0" 
+                                    title="YouTube video player" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                    allowfullscreen>
+                                </iframe>
                             </div>
                         </div>`;
                 }
@@ -247,10 +259,17 @@
             feedEl.appendChild(postCard);
         }
 
+        // Robust YouTube ID extractor
         function extractYouTubeId(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
             const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
+            if (match && match[7].length === 11) {
+                return match[7];
+            } else {
+                // Handle Shorts links
+                const shortsMatch = url.match(/shorts\/([a-zA-Z0-9_-]{11})/);
+                return shortsMatch ? shortsMatch[1] : null;
+            }
         }
     </script>
 </body>
