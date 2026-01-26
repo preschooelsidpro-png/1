@@ -59,10 +59,14 @@
         .post-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 8px; }
         .post-body { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 10px; white-space: pre-wrap; }
         
+        .post-media {
+            width: 100%;
+            margin-top: 10px;
+        }
+
         .post-media img {
             width: 100%;
             border-radius: 10px;
-            margin-top: 10px;
             display: block;
             background: #f8f8f8;
         }
@@ -112,7 +116,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -176,9 +180,10 @@
                     const post = postDoc.data();
                     
                     let isRelevant = false;
+                    // Target check with flexibility for string/number types
                     if (post.targetType === 'all' || post.targetValue === 'global') isRelevant = true;
-                    if (post.targetType === 'grade' && post.targetValue === grade.toString()) isRelevant = true;
-                    if (post.targetType === 'class' && post.targetValue === classKey) isRelevant = true;
+                    if (post.targetType === 'grade' && String(post.targetValue) === String(grade)) isRelevant = true;
+                    if (post.targetType === 'class' && String(post.targetValue) === String(classKey)) isRelevant = true;
                     if (post.targetType === 'individual' && post.targetValue === studentId) isRelevant = true;
 
                     if (isRelevant) {
@@ -204,11 +209,15 @@
             const feedEl = document.getElementById('feed');
             const postDate = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : 'Just now';
 
-            // Video handling
+            // දත්ත ලබාගැනීමේදී විවිධ ෆීල්ඩ් නම් පරීක්ෂා කිරීම (Case-insensitive behavior)
+            const videoUrl = post.videoUrl || post.video || post.videourl || "";
+            const imageUrl = post.imageUrl || post.image || post.imageurl || "";
+            const bodyText = post.body || post.message || post.description || "";
+
+            // YouTube Video
             let videoHTML = '';
-            const vUrl = post.videoUrl || post.video; // දෙපැත්තම බලනවා
-            if (vUrl && vUrl.trim() !== "") {
-                const videoId = extractYouTubeId(vUrl);
+            if (videoUrl.trim() !== "") {
+                const videoId = extractYouTubeId(videoUrl);
                 if (videoId) {
                     videoHTML = `
                         <div class="video-wrapper">
@@ -223,11 +232,10 @@
                 }
             }
 
-            // Image handling
+            // Image Display
             let imageHTML = '';
-            const iUrl = post.imageUrl || post.image; // දෙපැත්තම බලනවා
-            if (iUrl && iUrl.trim() !== "") {
-                let finalImgUrl = iUrl.trim();
+            if (imageUrl.trim() !== "") {
+                let finalImgUrl = imageUrl.trim();
                 if(finalImgUrl.includes('drive.google.com')){
                     const driveIdMatch = finalImgUrl.match(/[-\w]{25,}/);
                     if (driveIdMatch) {
@@ -240,8 +248,8 @@
             const postCard = document.createElement('div');
             postCard.className = 'post-card';
             postCard.innerHTML = `
-                <div class="post-title">${post.title || 'No Title'}</div>
-                <div class="post-body">${post.body || post.message || ''}</div>
+                <div class="post-title">${post.title || 'අලුත් පණිවිඩයක්'}</div>
+                <div class="post-body">${bodyText}</div>
                 ${imageHTML}
                 ${videoHTML}
                 <div class="post-date">${postDate}</div>
