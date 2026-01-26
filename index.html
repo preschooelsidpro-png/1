@@ -51,7 +51,7 @@
         .post-card {
             background: white;
             border-radius: 15px;
-            padding: 15px;
+            padding: 0;
             margin-bottom: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             overflow: hidden;
@@ -68,29 +68,32 @@
             background: #eee;
         }
 
+        /* Video Styling */
         .video-wrapper {
             width: 100%;
             background: #000;
-            line-height: 0;
         }
 
         .video-container {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            padding-bottom: 56.25%; /* 16:9 ratio */
             height: 0;
+            overflow: hidden;
         }
 
         .video-container iframe {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             border: 0;
         }
 
         .post-date {
             font-size: 11px;
             color: #999;
-            margin-top: 10px;
-            padding: 0 15px 15px 15px;
+            padding: 10px 15px 15px 15px;
             text-align: right;
         }
 
@@ -127,14 +130,13 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // SVG fallback placeholder instead of external URL
         const fallbackSVG = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='8' r='5'/%3e%3cpath d='M3 21v-2a7 7 0 0 1 14 0v2'/%3e%3c/svg%3e";
 
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
 
         if (!studentId) {
-            document.getElementById('loading').innerHTML = "❌ අවලංගු ID එකක්. කරුණාකර නැවත NFC එක ස්කෑන් කරන්න.";
+            document.getElementById('loading').innerHTML = "❌ අවලංගු ID එකක්.";
         } else {
             loadStudentData();
         }
@@ -144,9 +146,6 @@
                 const docRef = doc(db, "students", studentId);
                 const docSnap = await getDoc(docRef);
 
-                const photoImg = document.getElementById('displayPhoto');
-                photoImg.onerror = () => { photoImg.src = fallbackSVG; };
-
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     document.getElementById('profileSection').style.display = 'block';
@@ -154,25 +153,21 @@
                     document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo || '--'} | Grade: ${data.grade || '--'}-${data.classGroup || '--'}`;
                     
                     let studentPhoto = data.photoUrl || "";
-                    // Dropbox logic for student profile photo
                     if (studentPhoto.includes('dropbox.com')) {
                         studentPhoto = studentPhoto.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
                     }
+                    
+                    const photoImg = document.getElementById('displayPhoto');
+                    photoImg.onerror = () => { photoImg.src = fallbackSVG; };
+                    photoImg.src = studentPhoto || fallbackSVG;
 
-                    if(studentPhoto && studentPhoto.trim() !== "" && studentPhoto !== "undefined") {
-                        photoImg.src = studentPhoto;
-                    } else {
-                        photoImg.src = fallbackSVG;
-                    }
-
-                    // Fetch posts only once
                     loadPostsOnce(data.grade, data.classGroup);
                 } else {
                     document.getElementById('loading').innerHTML = "❌ ශිෂ්‍යයා සොයාගත නොහැක.";
                 }
             } catch (e) {
-                console.error("Error loading student data:", e);
-                document.getElementById('loading').innerHTML = "❌ දත්ත ලබාගැනීමේදී දෝෂයක් සිදු විය.";
+                console.error(e);
+                document.getElementById('loading').innerHTML = "❌ දෝෂයකි.";
             }
         }
 
@@ -182,97 +177,68 @@
 
             try {
                 const querySnapshot = await getDocs(collection(db, "posts"));
-                
-                const loadingEl = document.getElementById('loading');
-                if(loadingEl) loadingEl.style.display = 'none';
-                
+                document.getElementById('loading').style.display = 'none';
                 feedEl.innerHTML = ''; 
+                
                 let postsArray = [];
-
                 querySnapshot.forEach((postDoc) => {
                     const post = postDoc.data();
-                    
                     let isRelevant = false;
                     if (post.targetType === 'all' || post.targetValue === 'global') isRelevant = true;
                     if (post.targetType === 'grade' && String(post.targetValue) === String(grade)) isRelevant = true;
                     if (post.targetType === 'class' && String(post.targetValue) === String(classKey)) isRelevant = true;
                     if (post.targetType === 'individual' && post.targetValue === studentId) isRelevant = true;
 
-                    if (isRelevant) {
-                        postsArray.push(post);
-                    }
+                    if (isRelevant) postsArray.push(post);
                 });
 
-                postsArray.sort((a, b) => {
-                    const dateA = (a.createdAt && a.createdAt.seconds) ? a.createdAt.seconds : 0;
-                    const dateB = (b.createdAt && b.createdAt.seconds) ? b.createdAt.seconds : 0;
-                    return dateB - dateA;
-                });
+                postsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
                 if (postsArray.length > 0) {
                     postsArray.forEach(post => renderPost(post));
                 } else {
-                    feedEl.innerHTML = '<div class="no-posts">තවමත් අලුත් පණිවිඩ කිසිවක් නැත.</div>';
+                    feedEl.innerHTML = '<div class="no-posts">පණිවිඩ කිසිවක් නැත.</div>';
                 }
             } catch (err) {
-                console.error("Error loading posts:", err);
-                document.getElementById('loading').innerHTML = "❌ පණිවිඩ ලබාගැනීමේදී දෝෂයක් සිදු විය.";
+                console.error(err);
             }
         }
 
         function renderPost(post) {
             const feedEl = document.getElementById('feed');
             const postDate = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : 'Just now';
-
-            const videoUrl = (post.videoUrl || post.video || "").toString().trim();
-            const imageUrl = (post.imageUrl || post.image || "").toString().trim();
-            const bodyText = (post.body || post.message || post.description || "");
+            
+            const videoUrl = (post.videoUrl || "").trim();
+            const imageUrl = (post.imageUrl || "").trim();
 
             let videoHTML = '';
-            if (videoUrl !== "" && videoUrl !== "undefined") {
+            if (videoUrl) {
                 const videoId = extractYouTubeId(videoUrl);
                 if (videoId) {
                     videoHTML = `
                         <div class="video-wrapper">
                             <div class="video-container">
-                                <iframe 
-                                    src="https://www.youtube.com/embed/${videoId}?rel=0" 
-                                    frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                    allowfullscreen>
-                                </iframe>
+                                <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
                             </div>
                         </div>`;
                 }
             }
 
             let imageHTML = '';
-            if (imageUrl !== "" && imageUrl !== "undefined") {
+            if (imageUrl) {
                 let finalImgUrl = imageUrl;
-                
-                // Google Drive Link Logic
-                if(finalImgUrl.includes('drive.google.com')){
-                    const driveIdMatch = finalImgUrl.match(/[-\w]{25,}/);
-                    if (driveIdMatch) {
-                        finalImgUrl = `https://docs.google.com/uc?export=view&id=${driveIdMatch[0]}`;
-                    }
-                } 
-                // Dropbox Link Logic: convert to direct link
-                else if (finalImgUrl.includes('dropbox.com')) {
+                if (finalImgUrl.includes('dropbox.com')) {
                     finalImgUrl = finalImgUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
                 }
-
-                if (finalImgUrl.length > 5) {
-                    imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Media" onerror="this.parentElement.style.display='none'"></div>`;
-                }
+                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" onerror="this.parentElement.style.display='none'"></div>`;
             }
 
             const postCard = document.createElement('div');
             postCard.className = 'post-card';
             postCard.innerHTML = `
                 <div class="post-content">
-                    <div class="post-title">${post.title || 'පණිවිඩයක්'}</div>
-                    <div class="post-body">${bodyText}</div>
+                    <div class="post-title">${post.title || 'Update'}</div>
+                    <div class="post-body">${post.body || ''}</div>
                 </div>
                 ${imageHTML}
                 ${videoHTML}
@@ -282,9 +248,9 @@
         }
 
         function extractYouTubeId(url) {
-            const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-            const match = url.match(regex);
-            return (match && match[1]) ? match[1] : null;
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
         }
     </script>
 </body>
