@@ -101,7 +101,7 @@
 <body>
 
     <div id="profileSection" class="profile-card" style="display:none;">
-        <img id="displayPhoto" src="" alt="Profile" class="profile-img" onerror="this.src='https://via.placeholder.com/120?text=No+Photo'">
+        <img id="displayPhoto" src="" alt="Profile" class="profile-img">
         <div id="displayName" class="student-name">Loading...</div>
         <div id="displayDetails" class="student-info">Admission No: -- | Grade: --</div>
     </div>
@@ -127,6 +127,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // SVG fallback placeholder instead of external URL
+        const fallbackSVG = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='8' r='5'/%3e%3cpath d='M3 21v-2a7 7 0 0 1 14 0v2'/%3e%3c/svg%3e";
+
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
 
@@ -141,12 +144,20 @@
                 const docRef = doc(db, "students", studentId);
                 const docSnap = await getDoc(docRef);
 
+                const photoImg = document.getElementById('displayPhoto');
+                photoImg.onerror = () => { photoImg.src = fallbackSVG; };
+
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     document.getElementById('profileSection').style.display = 'block';
                     document.getElementById('displayName').textContent = data.name;
                     document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo} | Grade: ${data.grade}-${data.classGroup}`;
-                    if(data.photoUrl) document.getElementById('displayPhoto').src = data.photoUrl;
+                    
+                    if(data.photoUrl && data.photoUrl.trim() !== "") {
+                        photoImg.src = data.photoUrl;
+                    } else {
+                        photoImg.src = fallbackSVG;
+                    }
 
                     // Fetch posts only once
                     loadPostsOnce(data.grade, data.classGroup);
@@ -163,7 +174,6 @@
             const classKey = `${grade}-${classGroup}`;
 
             try {
-                // Changing to getDocs for single-time load instead of live sync
                 const querySnapshot = await getDocs(collection(db, "posts"));
                 
                 const loadingEl = document.getElementById('loading');
