@@ -178,16 +178,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // GitHub Pages වලට ගැලපෙන ලෙස වඩාත් නිවැරදිව ලින්ක් එක සැකසීම
+        // GitHub URL එක නිවැරදිව සැකසීම සඳහා නවීකරණය කරන ලද ෆන්ක්ෂන් එක
         function getProfileUrl(studentId) {
-            // දැනට තියෙන URL එක ගන්නවා (Ex: https://user.github.io/repo/register.html)
+            // දැනට පවතින URL එක (Ex: https://.../1/register.html)
             let currentFullUrl = window.location.href;
             
-            // register.html කියන කෑල්ල අයින් කරලා ඒ වෙනුවට index.html දානවා
-            let profileBase = currentFullUrl.split('register.html')[0] + 'index.html';
+            // "register.html" කොටස සම්පූර්ණයෙන්ම ඉවත් කර "index.html" ආදේශ කිරීම
+            let baseUrl = currentFullUrl.split('register.html')[0];
             
-            // අවසාන ලින්ක් එක හදනවා
-            return profileBase + "?id=" + studentId;
+            // ලින්ක් එකේ අවසානයට "/" තිබේදැයි පරීක්ෂා කර index.html එක් කිරීම
+            let linkBase = baseUrl.endsWith('/') ? baseUrl + "index.html" : baseUrl + "/index.html";
+            
+            return linkBase + "?id=" + studentId;
         }
 
         const fields = document.querySelectorAll('.input-field');
