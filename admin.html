@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISIA Admin - Content Manager</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* කාඩ් ඩිසයින් එක */
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        h2, h3 { color: #333; margin-top: 0; }
+        
+        /* ෆෝම් පෙනුම */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .full-width { grid-column: span 2; }
+
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            color: white;
+        }
+
+        .btn-primary { background-color: #007bff; width: 100%; }
+        .btn-primary:hover { background-color: #0056b3; }
+        
+        .btn-danger { background-color: #dc3545; padding: 5px 10px; font-size: 14px; }
+
+        /* ටේබල් ඩිසයින් එක */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #e9ecef; }
+        
+        .hidden { display: none; }
+        #statusMsg { text-align: center; margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- CONTENT UPLOAD SECTION -->
+        <div class="card">
+            <h2>📢 Content Uploader (දත්ත ඇතුළත් කිරීම)</h2>
+            <p style="color:#666; margin-bottom:20px;">ඡායාරූප, වීඩියෝ හෝ පණිවිඩ ශිෂ්‍යයන්ට යැවීම.</p>
+
+            <div class="form-grid">
+                <!-- Target Selection -->
+                <div class="full-width">
+                    <label>Target Audience (යවන්නේ කාටද?)</label>
+                    <select id="targetType" onchange="toggleInputs()">
+                        <option value="individual">Individual Student (තනි ශිෂ්‍යයෙකුට)</option>
+                        <option value="class">Whole Class (එක පන්තියකට, උදා: 5-A)</option>
+                        <option value="grade">Whole Grade (මුළු ශ්‍රේණියටම, උදා: Grade 5)</option>
+                        <option value="all">All Students (පාසලේ සියලුම දෙනාට)</option>
+                    </select>
+                </div>
+
+                <!-- Dynamic Inputs based on Target -->
+                <div id="inputStudentId" class="full-width">
+                    <label>Student ID (NFC ID)</label>
+                    <input type="text" id="targetId" placeholder="Paste Student ID here">
+                </div>
+
+                <div id="inputGrade" class="hidden">
+                    <label>Select Grade</label>
+                    <select id="targetGrade">
+                        <option value="1">Grade 1</option>
+                        <option value="2">Grade 2</option>
+                        <option value="3">Grade 3</option>
+                        <option value="4">Grade 4</option>
+                        <option value="5">Grade 5</option>
+                        <option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option>
+                        <option value="8">Grade 8</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
+                        <option value="11">Grade 11</option>
+                    </select>
+                </div>
+
+                <div id="inputClass" class="hidden">
+                    <label>Select Class</label>
+                    <select id="targetClass">
+                        <option value="A">Class A</option>
+                        <option value="B">Class B</option>
+                        <option value="C">Class C</option>
+                        <option value="D">Class D</option>
+                        <option value="E">Class E</option>
+                    </select>
+                </div>
+
+                <!-- Content Details -->
+                <div class="full-width">
+                    <label>Title (මැය)</label>
+                    <input type="text" id="contentTitle" placeholder="Ex: Sports Meet Photos">
+                </div>
+
+                <div class="full-width">
+                    <label>Message / Description</label>
+                    <textarea id="contentBody" rows="2" placeholder="Short description..."></textarea>
+                </div>
+
+                <div>
+                    <label>Image URL (Optional)</label>
+                    <input type="url" id="contentImage" placeholder="Google Drive Link">
+                </div>
+
+                <div>
+                    <label>Video URL (Optional)</label>
+                    <input type="url" id="contentVideo" placeholder="YouTube Link">
+                </div>
+            </div>
+
+            <button class="btn-primary" id="sendBtn">🚀 Send Update</button>
+            <div id="statusMsg"></div>
+        </div>
+
+        <!-- STUDENT LIST SECTION -->
+        <div class="card">
+            <h3>📋 Student List</h3>
+            <div id="loading">Loading students...</div>
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>ID</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
+            authDomain: "isia-4324b.firebaseapp.com",
+            projectId: "isia-4324b",
+            storageBucket: "isia-4324b.firebasestorage.app",
+            messagingSenderId: "981887431122",
+            appId: "1:981887431122:web:8e96c34367cb4228ff980b",
+            measurementId: "G-10N2QR8W12"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- UI Logic for Target Selection ---
+        window.toggleInputs = () => {
+            const type = document.getElementById('targetType').value;
+            const studentInput = document.getElementById('inputStudentId');
+            const gradeInput = document.getElementById('inputGrade');
+            const classInput = document.getElementById('inputClass');
+
+            // Reset visibility
+            studentInput.classList.add('hidden');
+            gradeInput.classList.add('hidden');
+            classInput.classList.add('hidden');
+
+            if (type === 'individual') {
+                studentInput.classList.remove('hidden');
+            } else if (type === 'class') {
+                gradeInput.classList.remove('hidden');
+                classInput.classList.remove('hidden');
+            } else if (type === 'grade') {
+                gradeInput.classList.remove('hidden');
+            }
+            // 'all' needs no extra inputs
+        };
+        // Run once on load
+        toggleInputs();
+
+
+        // --- SEND CONTENT LOGIC ---
+        document.getElementById('sendBtn').addEventListener('click', async () => {
+            const type = document.getElementById('targetType').value;
+            const title = document.getElementById('contentTitle').value;
+            const body = document.getElementById('contentBody').value;
+            const img = document.getElementById('contentImage').value;
+            const video = document.getElementById('contentVideo').value;
+            const msgEl = document.getElementById('statusMsg');
+
+            if (!title) {
+                alert("Please enter a Title");
+                return;
+            }
+
+            let targetValue = "";
+            
+            // Determine target value based on selection
+            if (type === 'individual') {
+                targetValue = document.getElementById('targetId').value.trim();
+                if(!targetValue) return alert("Enter Student ID");
+            } else if (type === 'class') {
+                const g = document.getElementById('targetGrade').value;
+                const c = document.getElementById('targetClass').value;
+                targetValue = `${g}-${c}`; // Ex: "5-A"
+            } else if (type === 'grade') {
+                targetValue = document.getElementById('targetGrade').value; // Ex: "5"
+            } else {
+                targetValue = "global";
+            }
+
+            msgEl.textContent = "Sending...";
+            
+            try {
+                // We save these updates to a separate collection called 'posts'
+                // The student profile page will read from this collection later
+                await addDoc(collection(db, "posts"), {
+                    targetType: type,   // individual, class, grade, all
+                    targetValue: targetValue, 
+                    title: title,
+                    body: body,
+                    imageUrl: img,
+                    videoUrl: video,
+                    createdAt: serverTimestamp()
+                });
+
+                msgEl.textContent = "✅ Update Sent Successfully!";
+                msgEl.style.color = "green";
+                
+                // Clear content fields
+                document.getElementById('contentTitle').value = '';
+                document.getElementById('contentBody').value = '';
+                document.getElementById('contentImage').value = '';
+                document.getElementById('contentVideo').value = '';
+
+            } catch (e) {
+                console.error(e);
+                msgEl.textContent = "❌ Error sending update";
+                msgEl.style.color = "red";
+            }
+        });
+
+
+        // --- STUDENT LIST LOGIC ---
+        const tableBody = document.getElementById('tableBody');
+        const loading = document.getElementById('loading');
+        
+        const q = query(collection(db, "students"), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            tableBody.innerHTML = '';
+            snapshot.forEach((studentDoc) => {
+                const data = studentDoc.data();
+                const id = studentDoc.id;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${data.name}</td>
+                    <td>${data.grade} - ${data.classGroup || '?'}</td>
+                    <td style="font-family:monospace; font-size:12px;">${id}</td>
+                    <td>
+                        <button class="btn-danger" onclick="copyId('${id}')">Copy ID</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+            loading.style.display = 'none';
+        });
+
+        // Helper to copy ID for individual updates
+        window.copyId = (id) => {
+            document.getElementById('targetType').value = 'individual';
+            toggleInputs();
+            document.getElementById('targetId').value = id;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+    </script>
+</body>
+</html>
