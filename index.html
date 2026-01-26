@@ -64,6 +64,7 @@
             border-radius: 10px;
             margin-top: 10px;
             display: block;
+            background: #f8f8f8;
         }
 
         .video-wrapper {
@@ -111,7 +112,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -176,7 +177,7 @@
                     
                     let isRelevant = false;
                     if (post.targetType === 'all' || post.targetValue === 'global') isRelevant = true;
-                    if (post.targetType === 'grade' && post.targetValue === grade) isRelevant = true;
+                    if (post.targetType === 'grade' && post.targetValue === grade.toString()) isRelevant = true;
                     if (post.targetType === 'class' && post.targetValue === classKey) isRelevant = true;
                     if (post.targetType === 'individual' && post.targetValue === studentId) isRelevant = true;
 
@@ -203,18 +204,18 @@
             const feedEl = document.getElementById('feed');
             const postDate = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : 'Just now';
 
-            // වීඩියෝ ලින්ක් එක තිබේදැයි පරීක්ෂා කර හඳුනා ගැනීම
+            // Video handling
             let videoHTML = '';
-            if (post.videoUrl && post.videoUrl.trim() !== "") {
-                const videoId = extractYouTubeId(post.videoUrl);
+            const vUrl = post.videoUrl || post.video; // දෙපැත්තම බලනවා
+            if (vUrl && vUrl.trim() !== "") {
+                const videoId = extractYouTubeId(vUrl);
                 if (videoId) {
                     videoHTML = `
                         <div class="video-wrapper">
                             <div class="video-container">
                                 <iframe 
-                                    src="https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0" 
+                                    src="https://www.youtube.com/embed/${videoId}?rel=0" 
                                     frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                     allowfullscreen>
                                 </iframe>
                             </div>
@@ -222,24 +223,25 @@
                 }
             }
 
-            // පින්තූර ලින්ක් එක පරීක්ෂා කිරීම
+            // Image handling
             let imageHTML = '';
-            if (post.imageUrl && post.imageUrl.trim() !== "") {
-                let finalImgUrl = post.imageUrl;
+            const iUrl = post.imageUrl || post.image; // දෙපැත්තම බලනවා
+            if (iUrl && iUrl.trim() !== "") {
+                let finalImgUrl = iUrl.trim();
                 if(finalImgUrl.includes('drive.google.com')){
                     const driveIdMatch = finalImgUrl.match(/[-\w]{25,}/);
                     if (driveIdMatch) {
                         finalImgUrl = `https://docs.google.com/uc?export=view&id=${driveIdMatch[0]}`;
                     }
                 }
-                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Image" onerror="this.style.display='none'"></div>`;
+                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Media" onerror="this.parentElement.style.display='none'"></div>`;
             }
 
             const postCard = document.createElement('div');
             postCard.className = 'post-card';
             postCard.innerHTML = `
-                <div class="post-title">${post.title}</div>
-                <div class="post-body">${post.body || ''}</div>
+                <div class="post-title">${post.title || 'No Title'}</div>
+                <div class="post-body">${post.body || post.message || ''}</div>
                 ${imageHTML}
                 ${videoHTML}
                 <div class="post-date">${postDate}</div>
@@ -247,7 +249,6 @@
             feedEl.appendChild(postCard);
         }
 
-        // YouTube ID එක නිවැරදිව වෙන් කරගැනීමට වැඩි දියුණු කළ Function එක
         function extractYouTubeId(url) {
             const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
             const match = url.match(regex);
