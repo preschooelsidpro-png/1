@@ -3,203 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ISIA Admin - Content Manager</title>
+    <title>ISIA - Admin Dashboard</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            background-color: #f0f2f5;
             margin: 0;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        /* Card Design */
-        .card {
+        .admin-container {
             background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
-        }
-
-        h2, h3 { color: #333; margin-top: 0; }
-        
-        /* Form Styling */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .full-width { grid-column: span 2; }
-
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        
-        input, select, textarea {
             width: 100%;
-            padding: 10px;
+            max-width: 600px;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 { text-align: center; color: #333; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: #eee; cursor: pointer; border-radius: 8px; font-weight: bold; }
+        .tab-btn.active { background: #28a745; color: white; }
+
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 6px;
+            border-radius: 8px;
             box-sizing: border-box;
         }
 
-        button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            color: white;
-        }
-
-        .btn-primary { background-color: #007bff; width: 100%; }
-        .btn-primary:hover { background-color: #0056b3; }
-        
-        .btn-danger { background-color: #dc3545; padding: 5px 10px; font-size: 14px; }
-        .btn-warning { background-color: #ffc107; color: #000; padding: 5px 10px; font-size: 14px; margin-right: 5px; }
-
-        /* Table Styling */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background-color: #e9ecef; }
-        
-        .hidden { display: none; }
-        #statusMsg { text-align: center; margin-top: 10px; font-weight: bold; }
-
-        .post-item {
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
+        .alert-toggle {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 10px;
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
         }
-        .post-info { flex-grow: 1; }
-        .post-meta { font-size: 12px; color: #888; }
+
+        button.main-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        button.main-btn:hover { background-color: #0056b3; }
+
+        #statusMsg { margin-top: 15px; text-align: center; padding: 10px; border-radius: 8px; display: none; }
+        
+        .recent-posts { margin-top: 30px; width: 100%; }
+        .post-item { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; position: relative; }
+        .delete-btn { position: absolute; top: 10px; right: 10px; background: #ff4d4d; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 5px 10px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        
-        <!-- CONTENT UPLOAD SECTION -->
-        <div class="card">
-            <h2>📢 Content Uploader (දත්ත ඇතුළත් කිරීම)</h2>
-            <p style="color:#666; margin-bottom:20px;">ඡායාරූප, වීඩියෝ හෝ පණිවිඩ ශිෂ්‍යයන්ට යැවීම.</p>
+    <div class="admin-container">
+        <h2>🚀 ISIA Control Panel</h2>
 
-            <div class="form-grid">
-                <!-- Target Selection -->
-                <div class="full-width">
-                    <label>Target Audience (යවන්නේ කාටද?)</label>
-                    <select id="targetType" onchange="toggleInputs()">
-                        <option value="individual">Individual Student (තනි ශිෂ්‍යයෙකුට)</option>
-                        <option value="class">Whole Class (එක පන්තියකට, උදා: 5-A)</option>
-                        <option value="grade">Whole Grade (මුළු ශ්‍රේණියටම, උදා: Grade 5)</option>
-                        <option value="all">All Students (පාසලේ සියලුම දෙනාට)</option>
-                    </select>
-                </div>
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="showTab('newPost')">නව පෝස්ට් එකක්</button>
+            <button class="tab-btn" onclick="showTab('manageStudent')">ශිෂ්‍ය පණිවිඩ</button>
+        </div>
 
-                <!-- Dynamic Inputs based on Target -->
-                <div id="inputStudentId" class="full-width">
-                    <label>Student ID (NFC ID)</label>
-                    <input type="text" id="targetId" placeholder="Paste Student ID here">
-                </div>
-
-                <div id="inputGrade" class="hidden">
-                    <label>Select Grade</label>
-                    <select id="targetGrade">
-                        <option value="Preschool">Preschool</option>
-                        <option value="2+">Grade 2+</option>
-                        <option value="3+">Grade 3+</option>
-                        <option value="4+">Grade 4+</option>
-                        <option value="1">Grade 1</option>
-                        <option value="2">Grade 2</option>
-                        <option value="3">Grade 3</option>
-                        <option value="4">Grade 4</option>
-                        <option value="5">Grade 5</option>
-                        <option value="6">Grade 6</option>
-                        <option value="7">Grade 7</option>
-                        <option value="8">Grade 8</option>
-                        <option value="9">Grade 9</option>
-                        <option value="10">Grade 10</option>
-                        <option value="11">Grade 11</option>
-                    </select>
-                </div>
-
-                <div id="inputClass" class="hidden">
-                    <label>Select Class</label>
-                    <select id="targetClass">
-                        <option value="A">Class A</option>
-                        <option value="B">Class B</option>
-                        <option value="C">Class C</option>
-                        <option value="D">Class D</option>
-                        <option value="E">Class E</option>
-                    </select>
-                </div>
-
-                <!-- Content Details -->
-                <div class="full-width">
-                    <label>Title (මැය)</label>
-                    <input type="text" id="contentTitle" placeholder="Ex: Sports Meet Photos">
-                </div>
-
-                <div class="full-width">
-                    <label>Message / Description</label>
-                    <textarea id="contentBody" rows="2" placeholder="Short description..."></textarea>
-                </div>
-
-                <div>
-                    <label>Image URL (Dropbox/Drive)</label>
-                    <input type="url" id="contentImage" placeholder="Paste Link here">
-                </div>
-
-                <div>
-                    <label>Video URL (YouTube)</label>
-                    <input type="url" id="contentVideo" placeholder="Paste YouTube Link here">
-                </div>
+        <!-- Section 1: Create New Post -->
+        <div id="newPost" class="form-section active">
+            <div class="form-group">
+                <label>පෝස්ට් මාතෘකාව (Title)</label>
+                <input type="text" id="postTitle" placeholder="Ex: නිවාඩු දැනුම්දීම">
+            </div>
+            <div class="form-group">
+                <label>විස්තරය (Body)</label>
+                <textarea id="postBody" rows="4" placeholder="පණිවිඩය මෙතන ලියන්න..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>පින්තූර ලින්ක් (Image URL - Optional)</label>
+                <input type="url" id="postImageUrl" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>වීඩියෝ ලින්ක් (YouTube URL - Optional)</label>
+                <input type="url" id="postVideoUrl" placeholder="https://youtube.com/...">
             </div>
 
-            <button class="btn-primary" id="sendBtn">🚀 Send Update</button>
-            <div id="statusMsg"></div>
+            <div class="alert-toggle">
+                <input type="checkbox" id="isAlert" style="width: auto;">
+                <label for="isAlert" style="margin:0; color: #856404;">මෙය වැදගත් දැනුම්දීමක් (Alert) ලෙස පෙන්වන්න</label>
+            </div>
+
+            <div class="form-group">
+                <label>පෙන්විය යුතු කාණ්ඩය (Target)</label>
+                <select id="targetType" onchange="toggleTargetInput()">
+                    <option value="all">සියලුම දෙනාට (Global)</option>
+                    <option value="grade">ශ්‍රේණියකට (Grade)</option>
+                    <option value="class">පන්තියකට (Class)</option>
+                    <option value="individual">එක් ශිෂ්‍යයෙකුට (Individual)</option>
+                </select>
+            </div>
+            
+            <!-- Dynamic Selection Inputs -->
+            <div id="targetValueDiv" class="form-group" style="display:none;">
+                <label id="targetLabel">අදාළ අගය (Target Value)</label>
+                
+                <!-- Grade Select (Hidden by default) -->
+                <select id="gradeSelect" style="display:none;">
+                    <option value="Preschool">Preschool</option>
+                    <option value="2+">Grade 2+</option>
+                    <option value="3+">Grade 3+</option>
+                    <option value="4+">Grade 4+</option>
+                    <option value="1">Grade 1</option>
+                    <option value="2">Grade 2</option>
+                    <option value="3">Grade 3</option>
+                    <option value="4">Grade 4</option>
+                    <option value="5">Grade 5</option>
+                    <option value="6">Grade 6</option>
+                    <option value="7">Grade 7</option>
+                    <option value="8">Grade 8</option>
+                    <option value="9">Grade 9</option>
+                    <option value="10">Grade 10</option>
+                    <option value="11">Grade 11</option>
+                </select>
+
+                <!-- Class Select (Hidden by default) -->
+                <select id="classSelect" style="display:none;">
+                    <!-- Common class tags, can be customized -->
+                    <option value="1-A">1-A</option><option value="1-B">1-B</option>
+                    <option value="2-A">2-A</option><option value="2-B">2-B</option>
+                    <option value="3-A">3-A</option><option value="3-B">3-B</option>
+                    <option value="4-A">4-A</option><option value="4-B">4-B</option>
+                    <option value="5-A">5-A</option><option value="5-B">5-B</option>
+                    <option value="6-A">6-A</option><option value="6-B">6-B</option>
+                    <option value="7-A">7-A</option><option value="7-B">7-B</option>
+                    <option value="8-A">8-A</option><option value="8-B">8-B</option>
+                    <option value="9-A">9-A</option><option value="9-B">9-B</option>
+                    <option value="10-A">10-A</option><option value="10-B">10-B</option>
+                    <option value="11-A">11-A</option><option value="11-B">11-B</option>
+                </select>
+
+                <!-- Individual ID input (Shown for individual) -->
+                <input type="text" id="targetValueInput" placeholder="Student ID" style="display:none;">
+            </div>
+
+            <button class="main-btn" id="publishBtn">පල කරන්න (Publish)</button>
         </div>
 
-        <!-- RECENT POSTS SECTION -->
-        <div class="card">
-            <h3>🕒 Recent Updates (කලින් යැවූ පණිවිඩ)</h3>
-            <div id="postsLoading">Loading updates...</div>
-            <div id="postsList"></div>
+        <!-- Section 2: Manage Student Specific Note -->
+        <div id="manageStudent" class="form-section">
+            <div class="form-group">
+                <label>ශිෂ්‍ය ID එක (Student Document ID)</label>
+                <input type="text" id="manageStudentId" placeholder="ID එක මෙතන paste කරන්න">
+            </div>
+            <div class="form-group">
+                <label>දෙමාපියන් සඳහා පෞද්ගලික පණිවිඩය (Parent Note)</label>
+                <textarea id="parentNote" rows="3" placeholder="මෙම ශිෂ්‍යයාගේ දෙමාපියන්ට පමණක් පෙන්වන පණිවිඩය..."></textarea>
+            </div>
+            <button class="main-btn" style="background-color: #28a745;" id="updateStudentBtn">යාවත්කාලීන කරන්න (Update Note)</button>
         </div>
 
-        <!-- STUDENT LIST SECTION -->
-        <div class="card">
-            <h3>📋 Student List</h3>
-            <div id="loading">Loading students...</div>
-            <table id="studentTable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Class</th>
-                        <th>ID</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
+        <div id="statusMsg"></div>
 
+        <div class="recent-posts">
+            <h3>මෑතකදී පල කළ පෝස්ට්</h3>
+            <div id="postsList">දත්ත ලබා ගනිමින්...</div>
+        </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -214,154 +201,126 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- UI Logic for Target Selection ---
-        window.toggleInputs = () => {
+        // Tab Switching
+        window.showTab = (tabId) => {
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        window.toggleTargetInput = () => {
             const type = document.getElementById('targetType').value;
-            const studentInput = document.getElementById('inputStudentId');
-            const gradeInput = document.getElementById('inputGrade');
-            const classInput = document.getElementById('inputClass');
+            const container = document.getElementById('targetValueDiv');
+            const label = document.getElementById('targetLabel');
+            
+            const gradeSelect = document.getElementById('gradeSelect');
+            const classSelect = document.getElementById('classSelect');
+            const idInput = document.getElementById('targetValueInput');
 
-            studentInput.classList.add('hidden');
-            gradeInput.classList.add('hidden');
-            classInput.classList.add('hidden');
+            // Reset visibility
+            container.style.display = 'none';
+            gradeSelect.style.display = 'none';
+            classSelect.style.display = 'none';
+            idInput.style.display = 'none';
 
-            if (type === 'individual') {
-                studentInput.classList.remove('hidden');
-            } else if (type === 'class') {
-                gradeInput.classList.remove('hidden');
-                classInput.classList.remove('hidden');
-            } else if (type === 'grade') {
-                gradeInput.classList.remove('hidden');
+            if(type === 'all') return;
+
+            container.style.display = 'block';
+            if(type === 'grade') {
+                label.innerText = "ශ්‍රේණිය තෝරන්න";
+                gradeSelect.style.display = 'block';
+            } else if(type === 'class') {
+                label.innerText = "පන්තිය තෝරන්න";
+                classSelect.style.display = 'block';
+            } else if(type === 'individual') {
+                label.innerText = "ශිෂ්‍ය ID එක ඇතුළත් කරන්න";
+                idInput.style.display = 'block';
             }
         };
-        toggleInputs();
 
-        // --- SEND CONTENT LOGIC ---
-        document.getElementById('sendBtn').addEventListener('click', async () => {
+        // Publish Post
+        document.getElementById('publishBtn').onclick = async () => {
+            const btn = document.getElementById('publishBtn');
+            const status = document.getElementById('statusMsg');
             const type = document.getElementById('targetType').value;
-            const title = document.getElementById('contentTitle').value;
-            const body = document.getElementById('contentBody').value;
-            const img = document.getElementById('contentImage').value;
-            const video = document.getElementById('contentVideo').value;
-            const msgEl = document.getElementById('statusMsg');
-
-            if (!title) {
-                alert("Please enter a Title");
-                return;
-            }
-
-            let targetValue = "";
-            if (type === 'individual') {
-                targetValue = document.getElementById('targetId').value.trim();
-                if(!targetValue) return alert("Enter Student ID");
-            } else if (type === 'class') {
-                const g = document.getElementById('targetGrade').value;
-                const c = document.getElementById('targetClass').value;
-                targetValue = `${g}-${c}`;
-            } else if (type === 'grade') {
-                targetValue = document.getElementById('targetGrade').value;
-            } else {
-                targetValue = "global";
-            }
-
-            msgEl.textContent = "Sending...";
             
+            let finalValue = 'global';
+            if(type === 'grade') finalValue = document.getElementById('gradeSelect').value;
+            else if(type === 'class') finalValue = document.getElementById('classSelect').value;
+            else if(type === 'individual') finalValue = document.getElementById('targetValueInput').value;
+
+            const data = {
+                title: document.getElementById('postTitle').value,
+                body: document.getElementById('postBody').value,
+                imageUrl: document.getElementById('postImageUrl').value,
+                videoUrl: document.getElementById('postVideoUrl').value,
+                isAlert: document.getElementById('isAlert').checked,
+                targetType: type,
+                targetValue: finalValue,
+                createdAt: serverTimestamp()
+            };
+
+            if(!data.title || !data.body) return alert("මාතෘකාව සහ විස්තරය අනිවාර්යයි!");
+            if(type !== 'all' && !finalValue) return alert("කරුණාකර ඉලක්කය (Target) තෝරන්න!");
+
+            btn.disabled = true;
             try {
-                await addDoc(collection(db, "posts"), {
-                    targetType: type,
-                    targetValue: targetValue, 
-                    title: title,
-                    body: body,
-                    imageUrl: img,
-                    videoUrl: video,
-                    createdAt: serverTimestamp()
-                });
-
-                msgEl.textContent = "✅ Update Sent Successfully!";
-                msgEl.style.color = "green";
-                
-                document.getElementById('contentTitle').value = '';
-                document.getElementById('contentBody').value = '';
-                document.getElementById('contentImage').value = '';
-                document.getElementById('contentVideo').value = '';
-
+                await addDoc(collection(db, "posts"), data);
+                status.innerText = "✅ පෝස්ට් එක සාර්ථකව පල කළා!";
+                status.style.display = "block";
+                status.style.background = "#d4edda";
+                setTimeout(() => location.reload(), 1500);
             } catch (e) {
-                console.error(e);
-                msgEl.textContent = "❌ Error sending update";
-                msgEl.style.color = "red";
+                alert("දෝෂයකි: " + e.message);
+                btn.disabled = false;
             }
-        });
+        };
 
-        // --- RECENT POSTS / DELETE LOGIC ---
-        const postsList = document.getElementById('postsList');
-        const postsLoading = document.getElementById('postsLoading');
+        // Update Student Specific Note
+        document.getElementById('updateStudentBtn').onclick = async () => {
+            const studentId = document.getElementById('manageStudentId').value.trim();
+            const note = document.getElementById('parentNote').value;
+            
+            if(!studentId) return alert("කරුණාකර ශිෂ්‍ය ID එක ඇතුළත් කරන්න.");
 
-        const postsQuery = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(20));
-        onSnapshot(postsQuery, (snapshot) => {
-            postsList.innerHTML = '';
-            if (snapshot.empty) {
-                postsList.innerHTML = '<p style="color:#999;">No recent updates found.</p>';
+            try {
+                const studentRef = doc(db, "students", studentId);
+                await updateDoc(studentRef, { parentNote: note });
+                alert("✅ පණිවිඩය සාර්ථකව යාවත්කාලීන කළා!");
+            } catch (e) {
+                alert("දෝෂයකි: ශිෂ්‍යයා සොයාගත නොහැක.");
             }
-            snapshot.forEach((postDoc) => {
-                const post = postDoc.data();
-                const postId = postDoc.id;
-                
+        };
+
+        // Load Posts
+        async function loadPosts() {
+            const listEl = document.getElementById('postsList');
+            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10));
+            const snap = await getDocs(q);
+            
+            listEl.innerHTML = '';
+            snap.forEach(postDoc => {
+                const d = postDoc.data();
                 const div = document.createElement('div');
                 div.className = 'post-item';
                 div.innerHTML = `
-                    <div class="post-info">
-                        <strong>${post.title}</strong><br>
-                        <span class="post-meta">Target: ${post.targetType} (${post.targetValue})</span>
-                    </div>
-                    <button class="btn-danger" onclick="deletePost('${postId}')">Delete</button>
+                    <strong>${d.title}</strong><br>
+                    <small>Target: ${d.targetType} (${d.targetValue})</small>
+                    <button class="delete-btn" onclick="deletePost('${postDoc.id}')">මකන්න</button>
                 `;
-                postsList.appendChild(div);
+                listEl.appendChild(div);
             });
-            postsLoading.style.display = 'none';
-        });
+        }
 
         window.deletePost = async (id) => {
-            if(confirm("Are you sure you want to delete this update?")) {
-                try {
-                    await deleteDoc(doc(db, "posts", id));
-                } catch (e) {
-                    alert("Error deleting post");
-                }
+            if(confirm("මෙම පෝස්ට් එක මැකීමට ඔබට විශ්වාසද?")) {
+                await deleteDoc(doc(db, "posts", id));
+                loadPosts();
             }
         };
 
-        // --- STUDENT LIST LOGIC ---
-        const tableBody = document.getElementById('tableBody');
-        const loading = document.getElementById('loading');
-        
-        const q = query(collection(db, "students"), orderBy("createdAt", "desc"));
-        onSnapshot(q, (snapshot) => {
-            tableBody.innerHTML = '';
-            snapshot.forEach((studentDoc) => {
-                const data = studentDoc.data();
-                const id = studentDoc.id;
-                
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${data.name}</td>
-                    <td>${data.grade} - ${data.classGroup || '?'}</td>
-                    <td style="font-family:monospace; font-size:12px;">${id}</td>
-                    <td>
-                        <button class="btn-warning" onclick="copyId('${id}')">Copy ID</button>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
-            loading.style.display = 'none';
-        });
-
-        window.copyId = (id) => {
-            document.getElementById('targetType').value = 'individual';
-            toggleInputs();
-            document.getElementById('targetId').value = id;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
+        loadPosts();
     </script>
 </body>
 </html>
