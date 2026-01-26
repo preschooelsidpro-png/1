@@ -150,10 +150,10 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     document.getElementById('profileSection').style.display = 'block';
-                    document.getElementById('displayName').textContent = data.name;
-                    document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo} | Grade: ${data.grade}-${data.classGroup}`;
+                    document.getElementById('displayName').textContent = data.name || 'Unknown Student';
+                    document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo || '--'} | Grade: ${data.grade || '--'}-${data.classGroup || '--'}`;
                     
-                    if(data.photoUrl && data.photoUrl.trim() !== "") {
+                    if(data.photoUrl && data.photoUrl.trim() !== "" && data.photoUrl !== "undefined") {
                         photoImg.src = data.photoUrl;
                     } else {
                         photoImg.src = fallbackSVG;
@@ -165,6 +165,7 @@
                     document.getElementById('loading').innerHTML = "❌ ශිෂ්‍යයා සොයාගත නොහැක.";
                 }
             } catch (e) {
+                console.error("Error loading student data:", e);
                 document.getElementById('loading').innerHTML = "❌ දත්ත ලබාගැනීමේදී දෝෂයක් සිදු විය.";
             }
         }
@@ -222,7 +223,7 @@
             const bodyText = (post.body || post.message || post.description || "");
 
             let videoHTML = '';
-            if (videoUrl !== "") {
+            if (videoUrl !== "" && videoUrl !== "undefined") {
                 const videoId = extractYouTubeId(videoUrl);
                 if (videoId) {
                     videoHTML = `
@@ -240,7 +241,7 @@
             }
 
             let imageHTML = '';
-            if (imageUrl !== "") {
+            if (imageUrl !== "" && imageUrl !== "undefined") {
                 let finalImgUrl = imageUrl;
                 if(finalImgUrl.includes('drive.google.com')){
                     const driveIdMatch = finalImgUrl.match(/[-\w]{25,}/);
@@ -248,7 +249,10 @@
                         finalImgUrl = `https://docs.google.com/uc?export=view&id=${driveIdMatch[0]}`;
                     }
                 }
-                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Media" onerror="this.style.display='none'"></div>`;
+                // Only create image HTML if we have a seemingly valid URL
+                if (finalImgUrl.length > 5) {
+                    imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Media" onerror="this.parentElement.style.display='none'"></div>`;
+                }
             }
 
             const postCard = document.createElement('div');
