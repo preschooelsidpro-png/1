@@ -45,51 +45,24 @@
         button {
             width: 100%;
             padding: 14px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
+            background-color: #28a745; color: white; border: none; border-radius: 8px;
+            font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s;
             margin-top: 10px;
         }
         button:hover { background-color: #218838; }
 
-        #message {
-            margin-top: 15px;
-            text-align: center;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 5px;
-        }
+        #message { margin-top: 15px; text-align: center; font-weight: bold; padding: 10px; border-radius: 5px; }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
         .student-list {
-            width: 100%;
-            max-width: 500px;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%; max-width: 500px; background: white; padding: 20px;
+            border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .student-item {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
+        .student-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 5px; }
         .nfc-link {
-            font-size: 12px;
-            color: #007bff;
-            word-break: break-all;
-            background: #f8f9fa;
-            padding: 5px;
-            border-radius: 4px;
-            text-decoration: none;
+            font-size: 12px; color: #007bff; word-break: break-all;
+            background: #f8f9fa; padding: 5px; border-radius: 4px; text-decoration: none;
         }
         .nfc-link:hover { text-decoration: underline; }
     </style>
@@ -180,13 +153,13 @@
 
         // GitHub URL එක නිවැරදිව සැකසීම සඳහා නවීකරණය කරන ලද ෆන්ක්ෂන් එක
         function getProfileUrl(studentId) {
-            // දැනට පවතින URL එක (Ex: https://.../1/register.html)
-            let currentFullUrl = window.location.href;
+            // දැනට පවතින URL එක (Ex: https://preschooelsidpro-png.github.io/1/register.html)
+            let currentUrl = window.location.href;
             
-            // "register.html" කොටස සම්පූර්ණයෙන්ම ඉවත් කර "index.html" ආදේශ කිරීම
-            let baseUrl = currentFullUrl.split('register.html')[0];
+            // "register.html" හෝ "/register" යන කොටස් ඉවත් කර ප්‍රධාන Folder එක ලබා ගැනීම
+            let baseUrl = currentUrl.split('register')[0];
             
-            // ලින්ක් එකේ අවසානයට "/" තිබේදැයි පරීක්ෂා කර index.html එක් කිරීම
+            // URL එකේ අගට "/" තිබේදැයි පරීක්ෂා කර index.html සහ ID එක එකතු කිරීම
             let linkBase = baseUrl.endsWith('/') ? baseUrl + "index.html" : baseUrl + "/index.html";
             
             return linkBase + "?id=" + studentId;
