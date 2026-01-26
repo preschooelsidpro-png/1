@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISIA - Student Registration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #218838; }
+
+        #message {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .student-list {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .student-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .nfc-link {
+            font-size: 12px;
+            color: #007bff;
+            word-break: break-all;
+            background: #f8f9fa;
+            padding: 5px;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .nfc-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🎓 ISIA Student Registration</h2>
+        
+        <div class="form-group">
+            <label>Student Name (නම)</label>
+            <input type="text" id="name" placeholder="Enter full name" required class="input-field">
+        </div>
+
+        <div class="form-group">
+            <label>Admission No (ඇතුළත් වීමේ අංකය)</label>
+            <input type="text" id="admissionNo" placeholder="Ex: 2025001" required class="input-field">
+        </div>
+
+        <div class="form-group row">
+            <div class="col">
+                <label>Grade (ශ්‍රේණිය)</label>
+                <select id="grade" class="input-field">
+                    <option value="Preschool">Preschool</option>
+                    <option value="2+">Grade 2+</option>
+                    <option value="3+">Grade 3+</option>
+                    <option value="4+">Grade 4+</option>
+                    <option value="1">Grade 1</option>
+                    <option value="2">Grade 2</option>
+                    <option value="3">Grade 3</option>
+                    <option value="4">Grade 4</option>
+                    <option value="5">Grade 5</option>
+                    <option value="6">Grade 6</option>
+                    <option value="7">Grade 7</option>
+                    <option value="8">Grade 8</option>
+                    <option value="9">Grade 9</option>
+                    <option value="10">Grade 10</option>
+                    <option value="11">Grade 11</option>
+                </select>
+            </div>
+            <div class="col">
+                <label>Class (පන්තිය)</label>
+                <select id="classGroup" class="input-field">
+                    <option value="A">Class A</option>
+                    <option value="B">Class B</option>
+                    <option value="C">Class C</option>
+                    <option value="D">Class D</option>
+                    <option value="E">Class E</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Photo URL (Profile Image)</label>
+            <input type="url" id="photoUrl" placeholder="Paste link here" class="input-field">
+        </div>
+
+        <div class="form-group">
+            <label>Secure PIN</label>
+            <input type="text" id="pin" placeholder="4-digit PIN" maxlength="4" required class="input-field">
+        </div>
+
+        <button id="registerBtn">Register & Generate NFC Link</button>
+        <div id="message"></div>
+    </div>
+
+    <div class="student-list">
+        <h3>Recent Registrations</h3>
+        <div id="studentContainer">Loading...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
+            authDomain: "isia-4324b.firebaseapp.com",
+            projectId: "isia-4324b",
+            storageBucket: "isia-4324b.firebasestorage.app",
+            messagingSenderId: "981887431122",
+            appId: "1:981887431122:web:8e96c34367cb4228ff980b",
+            measurementId: "G-10N2QR8W12"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // GitHub Pages වලට ගැලපෙන ලෙස වඩාත් නිවැරදිව ලින්ක් එක සැකසීම
+        function getProfileUrl(studentId) {
+            // දැනට තියෙන URL එක ගන්නවා (Ex: https://user.github.io/repo/register.html)
+            let currentFullUrl = window.location.href;
+            
+            // register.html කියන කෑල්ල අයින් කරලා ඒ වෙනුවට index.html දානවා
+            let profileBase = currentFullUrl.split('register.html')[0] + 'index.html';
+            
+            // අවසාන ලින්ක් එක හදනවා
+            return profileBase + "?id=" + studentId;
+        }
+
+        const fields = document.querySelectorAll('.input-field');
+        fields.forEach((field, index) => {
+            field.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const nextField = fields[index + 1];
+                    if (nextField) nextField.focus();
+                    else document.getElementById('registerBtn').click();
+                }
+            });
+        });
+
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            const name = document.getElementById('name').value;
+            const admissionNo = document.getElementById('admissionNo').value;
+            const grade = document.getElementById('grade').value;
+            const classGroup = document.getElementById('classGroup').value;
+            const photoUrl = document.getElementById('photoUrl').value;
+            const pin = document.getElementById('pin').value;
+            const messageEl = document.getElementById('message');
+
+            if (!name || !admissionNo || !pin) {
+                messageEl.textContent = "Please fill all required fields!";
+                messageEl.className = "error";
+                return;
+            }
+
+            messageEl.textContent = "Processing...";
+            messageEl.className = "";
+
+            try {
+                const docRef = await addDoc(collection(db, "students"), {
+                    name: name,
+                    admissionNo: admissionNo,
+                    grade: grade,
+                    classGroup: classGroup,
+                    photoUrl: photoUrl,
+                    pin: pin,
+                    createdAt: serverTimestamp()
+                });
+
+                messageEl.textContent = "✅ Success! Student Registered.";
+                messageEl.className = "success";
+                
+                document.getElementById('name').value = '';
+                document.getElementById('admissionNo').value = '';
+                document.getElementById('pin').value = '';
+                document.getElementById('photoUrl').value = '';
+                document.getElementById('name').focus();
+
+            } catch (e) {
+                messageEl.textContent = "❌ Error: " + e.message;
+                messageEl.className = "error";
+            }
+        });
+
+        const q = query(collection(db, "students"), orderBy("createdAt", "desc"), limit(5));
+        onSnapshot(q, (snapshot) => {
+            const container = document.getElementById('studentContainer');
+            container.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const profileLink = getProfileUrl(doc.id);
+                const div = document.createElement('div');
+                div.className = 'student-item';
+                div.innerHTML = `
+                    <strong>${data.name} (${data.grade}-${data.classGroup})</strong>
+                    <a href="${profileLink}" class="nfc-link" target="_blank">NFC Link: ${profileLink}</a>
+                `;
+                container.appendChild(div);
+            });
+            if (snapshot.empty) container.innerHTML = 'No students registered yet.';
+        });
+    </script>
+</body>
+</html>
