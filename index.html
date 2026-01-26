@@ -41,6 +41,26 @@
         .student-name { font-size: 22px; font-weight: bold; color: #333; margin: 5px 0; }
         .student-info { color: #666; font-size: 14px; margin-bottom: 15px; }
 
+        /* Parent Notifications Section */
+        .notification-box {
+            width: 90%;
+            max-width: 460px;
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+        }
+        .notification-title {
+            font-weight: bold;
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
         /* Feed Section */
         .feed-container {
             width: 95%;
@@ -68,7 +88,7 @@
             background: #eee;
         }
 
-        /* Fixed Video Container for Better Compatibility */
+        /* Fixed Video Container */
         .video-wrapper {
             width: 100%;
             background: #000;
@@ -76,7 +96,7 @@
 
         .video-container {
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            padding-bottom: 56.25%; 
             height: 0;
             overflow: hidden;
         }
@@ -107,6 +127,14 @@
         <img id="displayPhoto" src="" alt="Profile" class="profile-img">
         <div id="displayName" class="student-name">Loading...</div>
         <div id="displayDetails" class="student-info">Admission No: -- | Grade: --</div>
+    </div>
+
+    <!-- Parent Notifications Box -->
+    <div id="notificationBox" class="notification-box">
+        <div class="notification-title">
+            ⚠️ වැදගත් දැනුම්දීමක්
+        </div>
+        <div id="notificationText" style="font-size: 14px; color: #856404;"></div>
     </div>
 
     <div id="feed" class="feed-container">
@@ -166,6 +194,12 @@
                         photoImg.src = fallbackSVG;
                     }
 
+                    // Load specific notification if available in student record
+                    if(data.parentNote) {
+                        document.getElementById('notificationBox').style.display = 'block';
+                        document.getElementById('notificationText').textContent = data.parentNote;
+                    }
+
                     loadPostsOnce(data.grade, data.classGroup);
                 } else {
                     document.getElementById('loading').innerHTML = "❌ ශිෂ්‍යයා සොයාගත නොහැක.";
@@ -189,7 +223,17 @@
                 querySnapshot.forEach((postDoc) => {
                     const post = postDoc.data();
                     let isRelevant = false;
-                    if (post.targetType === 'all' || post.targetValue === 'global') isRelevant = true;
+                    
+                    // Check for global notifications (targetType: all)
+                    if (post.targetType === 'all' || post.targetValue === 'global') {
+                        isRelevant = true;
+                        // If it's a high priority post, show it in the notification box too
+                        if(post.isAlert) {
+                            document.getElementById('notificationBox').style.display = 'block';
+                            document.getElementById('notificationText').textContent = post.title + ": " + post.body;
+                        }
+                    }
+
                     if (post.targetType === 'grade' && String(post.targetValue) === String(grade)) isRelevant = true;
                     if (post.targetType === 'class' && String(post.targetValue) === String(classKey)) isRelevant = true;
                     if (post.targetType === 'individual' && post.targetValue === studentId) isRelevant = true;
@@ -197,7 +241,6 @@
                     if (isRelevant) postsArray.push(post);
                 });
 
-                // Sort by time
                 postsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
                 if (postsArray.length > 0) {
@@ -259,23 +302,17 @@
             feedEl.appendChild(postCard);
         }
 
-        // Updated Robust YouTube ID extractor to handle LIVE links
         function extractYouTubeId(url) {
-            // General match for watch, embed, v, youtu.be
             const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
             const match = url.match(regExp);
             
             if (match && match[7] && match[7].length === 11) {
                 return match[7];
             } else {
-                // Handle Shorts links: youtube.com/shorts/ID
                 const shortsMatch = url.match(/shorts\/([a-zA-Z0-9_-]{11})/);
                 if (shortsMatch) return shortsMatch[1];
-                
-                // Handle Live links: youtube.com/live/ID
                 const liveMatch = url.match(/live\/([a-zA-Z0-9_-]{11})/);
                 if (liveMatch) return liveMatch[1];
-                
                 return null;
             }
         }
