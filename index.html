@@ -96,9 +96,28 @@
 
         #loading { margin-top: 50px; font-weight: bold; color: #666; padding: 20px; text-align: center; }
         .no-posts { text-align: center; color: #999; margin-top: 20px; }
+
+        /* Debug Logger Style */
+        #debug-box {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 10px;
+            max-height: 100px;
+            overflow-y: auto;
+            padding: 5px;
+            z-index: 1000;
+            display: none; /* පසුව පෙන්වීමට අවශ්‍ය නම් block කරන්න */
+        }
     </style>
 </head>
 <body>
+
+    <div id="debug-box">Debug Log:</div>
 
     <div id="profileSection" class="profile-card" style="display:none;">
         <img id="displayPhoto" src="" alt="Profile" class="profile-img" onerror="this.src='https://via.placeholder.com/120?text=No+Photo'">
@@ -127,12 +146,21 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Debug Logger Function
+        function logDebug(msg) {
+            const box = document.getElementById('debug-box');
+            console.log(msg);
+            box.innerHTML += `<div>> ${msg}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
 
         if (!studentId) {
             document.getElementById('loading').innerHTML = "❌ අවලංගු ID එකක්. කරුණාකර නැවත NFC එක ස්කෑන් කරන්න.";
         } else {
+            logDebug("Student ID detected: " + studentId);
             loadStudentData();
         }
 
@@ -143,6 +171,7 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    logDebug("Student data loaded: " + data.name);
                     document.getElementById('profileSection').style.display = 'block';
                     document.getElementById('displayName').textContent = data.name;
                     document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo} | Grade: ${data.grade}-${data.classGroup}`;
@@ -150,10 +179,11 @@
 
                     loadPosts(data.grade, data.classGroup);
                 } else {
+                    logDebug("Student ID not found in DB");
                     document.getElementById('loading').innerHTML = "❌ ශිෂ්‍යයා සොයාගත නොහැක.";
                 }
             } catch (e) {
-                console.error("Student load error:", e);
+                logDebug("Load Error: " + e.message);
                 document.getElementById('loading').innerHTML = "❌ දත්ත ලබාගැනීමේදී දෝෂයක් සිදු විය.";
             }
         }
@@ -161,6 +191,7 @@
         function loadPosts(grade, classGroup) {
             const feedEl = document.getElementById('feed');
             const classKey = `${grade}-${classGroup}`;
+            logDebug("Loading posts for: " + classKey);
 
             const q = collection(db, "posts");
 
@@ -169,8 +200,9 @@
                 if(loadingEl) loadingEl.style.display = 'none';
                 
                 feedEl.innerHTML = ''; 
-
                 let postsArray = [];
+
+                logDebug(`Found ${snapshot.size} total posts in DB. Filtering...`);
 
                 snapshot.forEach((postDoc) => {
                     const post = postDoc.data();
@@ -186,6 +218,8 @@
                     }
                 });
 
+                logDebug(`Posts after filtering: ${postsArray.length}`);
+
                 postsArray.sort((a, b) => {
                     const dateA = (a.createdAt && a.createdAt.seconds) ? a.createdAt.seconds : 0;
                     const dateB = (b.createdAt && b.createdAt.seconds) ? b.createdAt.seconds : 0;
@@ -197,6 +231,8 @@
                 } else {
                     feedEl.innerHTML = '<div class="no-posts">තවමත් අලුත් පණිවිඩ කිසිවක් නැත.</div>';
                 }
+            }, (error) => {
+                logDebug("Snapshot Error: " + error.message);
             });
         }
 
@@ -204,10 +240,12 @@
             const feedEl = document.getElementById('feed');
             const postDate = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : 'Just now';
 
-            // දත්ත පරීක්ෂාව - fields කිහිපයක්ම බලනවා
-            const videoUrl = (post.videoUrl || post.video || "").trim();
-            const imageUrl = (post.imageUrl || post.image || "").trim();
+            // දත්ත ලබාගැනීමේදී තවදුරටත් පුළුල් ලෙස බලමු
+            const videoUrl = (post.videoUrl || post.video || "").toString().trim();
+            const imageUrl = (post.imageUrl || post.image || "").toString().trim();
             const bodyText = (post.body || post.message || post.description || "");
+
+            logDebug(`Rendering Post: ${post.title} | Img: ${imageUrl.substring(0,15)}... | Vid: ${videoUrl.substring(0,15)}...`);
 
             // YouTube Video Logic
             let videoHTML = '';
@@ -225,6 +263,8 @@
                                 </iframe>
                             </div>
                         </div>`;
+                } else {
+                    logDebug("Invalid YouTube ID for: " + videoUrl);
                 }
             }
 
@@ -238,7 +278,7 @@
                         finalImgUrl = `https://docs.google.com/uc?export=view&id=${driveIdMatch[0]}`;
                     }
                 }
-                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Media" onerror="this.style.display='none'"></div>`;
+                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Media" onload="console.log('Img Loaded')" onerror="this.style.display='none'; console.log('Img Load Fail');"></div>`;
             }
 
             const postCard = document.createElement('div');
