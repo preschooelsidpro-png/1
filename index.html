@@ -153,8 +153,14 @@
                     document.getElementById('displayName').textContent = data.name || 'Unknown Student';
                     document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo || '--'} | Grade: ${data.grade || '--'}-${data.classGroup || '--'}`;
                     
-                    if(data.photoUrl && data.photoUrl.trim() !== "" && data.photoUrl !== "undefined") {
-                        photoImg.src = data.photoUrl;
+                    let studentPhoto = data.photoUrl || "";
+                    // Dropbox logic for student profile photo
+                    if (studentPhoto.includes('dropbox.com')) {
+                        studentPhoto = studentPhoto.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
+                    }
+
+                    if(studentPhoto && studentPhoto.trim() !== "" && studentPhoto !== "undefined") {
+                        photoImg.src = studentPhoto;
                     } else {
                         photoImg.src = fallbackSVG;
                     }
@@ -243,13 +249,19 @@
             let imageHTML = '';
             if (imageUrl !== "" && imageUrl !== "undefined") {
                 let finalImgUrl = imageUrl;
+                
+                // Google Drive Link Logic
                 if(finalImgUrl.includes('drive.google.com')){
                     const driveIdMatch = finalImgUrl.match(/[-\w]{25,}/);
                     if (driveIdMatch) {
                         finalImgUrl = `https://docs.google.com/uc?export=view&id=${driveIdMatch[0]}`;
                     }
+                } 
+                // Dropbox Link Logic: convert to direct link
+                else if (finalImgUrl.includes('dropbox.com')) {
+                    finalImgUrl = finalImgUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
                 }
-                // Only create image HTML if we have a seemingly valid URL
+
                 if (finalImgUrl.length > 5) {
                     imageHTML = `<div class="post-media"><img src="${finalImgUrl}" alt="Post Media" onerror="this.parentElement.style.display='none'"></div>`;
                 }
