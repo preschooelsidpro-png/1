@@ -59,7 +59,30 @@
             width: 100%; max-width: 500px; background: white; padding: 20px;
             border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .student-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 5px; }
+        .student-item { 
+            padding: 12px; 
+            border-bottom: 1px solid #eee; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px;
+            position: relative;
+        }
+        .student-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-btn {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .delete-btn:hover { background-color: #cc0000; }
+        
         .nfc-link {
             font-size: 12px; color: #007bff; word-break: break-all;
             background: #f8f9fa; padding: 5px; border-radius: 4px; text-decoration: none;
@@ -136,7 +159,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -151,17 +174,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // GitHub URL එක නිවැරදිව සැකසීම සඳහා නවීකරණය කරන ලද ෆන්ක්ෂන් එක
         function getProfileUrl(studentId) {
-            // දැනට පවතින URL එක (Ex: https://preschooelsidpro-png.github.io/1/register.html)
             let currentUrl = window.location.href;
-            
-            // "register.html" හෝ "/register" යන කොටස් ඉවත් කර ප්‍රධාන Folder එක ලබා ගැනීම
             let baseUrl = currentUrl.split('register')[0];
-            
-            // URL එකේ අගට "/" තිබේදැයි පරීක්ෂා කර index.html සහ ID එක එකතු කිරීම
             let linkBase = baseUrl.endsWith('/') ? baseUrl + "index.html" : baseUrl + "/index.html";
-            
             return linkBase + "?id=" + studentId;
         }
 
@@ -196,7 +212,7 @@
             messageEl.className = "";
 
             try {
-                const docRef = await addDoc(collection(db, "students"), {
+                await addDoc(collection(db, "students"), {
                     name: name,
                     admissionNo: admissionNo,
                     grade: grade,
@@ -221,17 +237,34 @@
             }
         });
 
-        const q = query(collection(db, "students"), orderBy("createdAt", "desc"), limit(5));
+        // Global function to delete student - NO PIN REQUIRED NOW
+        window.deleteStudent = async (studentId) => {
+            if (confirm("ඔබට විශ්වාසද මෙම ශිෂ්‍යයා ඉවත් කළ යුතු බව?")) {
+                try {
+                    await deleteDoc(doc(db, "students", studentId));
+                    // Alert can be replaced with a silent update since onSnapshot handles UI
+                } catch (e) {
+                    alert("❌ දෝෂයක් සිදු වුණා: " + e.message);
+                }
+            }
+        };
+
+        const q = query(collection(db, "students"), orderBy("createdAt", "desc"), limit(10));
         onSnapshot(q, (snapshot) => {
             const container = document.getElementById('studentContainer');
             container.innerHTML = '';
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const profileLink = getProfileUrl(doc.id);
+            snapshot.forEach((studentDoc) => {
+                const data = studentDoc.data();
+                const studentId = studentDoc.id;
+                const profileLink = getProfileUrl(studentId);
+                
                 const div = document.createElement('div');
                 div.className = 'student-item';
                 div.innerHTML = `
-                    <strong>${data.name} (${data.grade}-${data.classGroup})</strong>
+                    <div class="student-header">
+                        <strong>${data.name} (${data.grade}-${data.classGroup})</strong>
+                        <button class="delete-btn" onclick="deleteStudent('${studentId}')">Delete</button>
+                    </div>
                     <a href="${profileLink}" class="nfc-link" target="_blank">NFC Link: ${profileLink}</a>
                 `;
                 container.appendChild(div);
