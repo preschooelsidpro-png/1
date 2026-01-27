@@ -74,21 +74,6 @@
         .attendance-label { font-size: 13px; opacity: 0.9; }
         .attendance-status { font-size: 18px; font-weight: bold; }
 
-        /* Teacher Mode Button */
-        .teacher-mode-btn {
-            background: #333;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            border: none;
-            cursor: pointer;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
         /* Parent Notifications */
         .notification-box {
             width: 90%;
@@ -145,10 +130,6 @@
         </div>
         <div id="displayName" class="student-name">Loading...</div>
         <div id="displayDetails" class="student-info">Admission No: -- | Grade: --</div>
-        
-        <button id="teacherModeToggle" class="teacher-mode-btn" onclick="toggleTeacherMode()">
-            ⚙️ Teacher Mode: OFF
-        </button>
     </div>
 
     <div id="attendanceCard" class="attendance-card" style="display:none;">
@@ -190,7 +171,6 @@
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
 
-        // Dropbox ලින්ක් එක සෘජුවම පෙන්විය හැකි ලින්ක් එකක් බවට පත් කිරීමේ function එක
         function fixDropboxUrl(url) {
             if (!url) return "";
             if (url.includes("dropbox.com")) {
@@ -199,54 +179,11 @@
             return url;
         }
 
-        window.toggleTeacherMode = () => {
-            const current = localStorage.getItem('teacherMode') === 'true';
-            const newState = !current;
-            localStorage.setItem('teacherMode', newState);
-            updateTeacherUI();
-        };
-
-        function updateTeacherUI() {
-            const btn = document.getElementById('teacherModeToggle');
-            const isTeacher = localStorage.getItem('teacherMode') === 'true';
-            if(btn) {
-                btn.innerHTML = isTeacher ? "⚙️ Teacher Mode: ON" : "⚙️ Teacher Mode: OFF";
-                btn.style.background = isTeacher ? "#28a745" : "#333";
-            }
-        }
-
         if (studentId) {
-            handleEntry();
-        } else {
-            document.getElementById('loading').innerHTML = "❌ අවලංගු ID එකක්.";
-        }
-
-        async function handleEntry() {
-            const isTeacher = localStorage.getItem('teacherMode') === 'true';
-            if (isTeacher) await autoMarkAttendance();
             loadStudentData();
             checkAttendance();
-            updateTeacherUI();
-        }
-
-        async function autoMarkAttendance() {
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                const q = query(collection(db, "attendance"), where("studentId", "==", studentId), where("date", "==", today));
-                const snap = await getDocs(q);
-
-                if (snap.empty) {
-                    const studentSnap = await getDoc(doc(db, "students", studentId));
-                    if (studentSnap.exists()) {
-                        await addDoc(collection(db, "attendance"), {
-                            studentId: studentId,
-                            studentName: studentSnap.data().name,
-                            date: today,
-                            time: new Date().toLocaleTimeString()
-                        });
-                    }
-                }
-            } catch (e) { console.error(e); }
+        } else {
+            document.getElementById('loading').innerHTML = "❌ අවලංගු ID එකක්.";
         }
 
         async function loadStudentData() {
@@ -259,7 +196,6 @@
                     document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo} | Grade: ${data.grade}-${data.classGroup}`;
                     
                     if (data.photoUrl && data.photoUrl.trim() !== "") {
-                        // Dropbox ලින්ක් එක fix කර පින්තූරය ලෙස ලබා දීම
                         document.getElementById('displayPhoto').src = fixDropboxUrl(data.photoUrl);
                     }
 
@@ -330,7 +266,6 @@
                 const vid = post.videoUrl.split('v=')[1]?.split('&')[0] || post.videoUrl.split('/').pop();
                 mediaHTML = `<div class="video-container"><iframe src="https://www.youtube.com/embed/${vid}"></iframe></div>`;
             } else if (post.imageUrl && post.imageUrl.trim() !== "") {
-                // Post වල ඇති Dropbox ලින්ක් ද fix කර ලබා දීම
                 mediaHTML = `<div class="post-media"><img src="${fixDropboxUrl(post.imageUrl)}" onerror="this.parentElement.style.display='none'"></div>`;
             }
 
