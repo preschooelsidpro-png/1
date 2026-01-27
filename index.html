@@ -304,7 +304,7 @@
         <a id="cuteTvBtn" href="#" target="_blank" class="cute-btn tv">
             <span>📺</span> Cute TV
         </a>
-        <button class="cute-btn ai" onclick="handleCuteAI()">
+        <button class="cute-btn ai" onclick="showCuteAIModal()">
             <span>🤖</span> Cute AI
         </button>
     </div>
@@ -347,6 +347,7 @@
         const studentId = urlParams.get('id');
         let currentStudentData = null;
         let currentStoryAudio = null;
+        let isStoryLoading = false;
 
         const translations = {
             si: { today_attendance: "අද දින පැමිණීම", not_present: "පැමිණ නැත", present: "පැමිණ ඇත", time: "වේලාව", important_note: "⚠️ වැදගත් පණිවිඩයකි", loading: "පූරණය වෙමින්...", admission_label: "අංකය", grade_label: "ශ්‍රේණිය" },
@@ -404,7 +405,7 @@
             document.getElementById('aiModal').style.display = 'none';
             if (currentStoryAudio) {
                 currentStoryAudio.pause();
-                currentStoryAudio = null;
+                currentStoryAudio.currentTime = 0;
             }
         };
 
@@ -412,6 +413,12 @@
             if (currentStoryAudio) {
                 currentStoryAudio.play().catch(e => console.error("Playback failed", e));
             }
+        };
+
+        // NEW: Function to just show the modal, assuming background loading is in progress or done
+        window.showCuteAIModal = () => {
+            const modal = document.getElementById('aiModal');
+            modal.style.display = 'flex';
         };
 
         async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
@@ -427,22 +434,14 @@
             }
         }
 
-        window.handleCuteAI = async () => {
-            if(!currentStudentData) return;
+        // Modified handleCuteAI to run in the background without opening modal
+        async function preLoadCuteAI() {
+            if(!currentStudentData || isStoryLoading) return;
+            isStoryLoading = true;
             
-            const modal = document.getElementById('aiModal');
             const storyText = document.getElementById('aiStoryText');
             const audioControls = document.getElementById('audioControls');
             
-            modal.style.display = 'flex';
-            storyText.textContent = "🪄 දිගු ලස්සන කතාවක් නිර්මාණය කරමින් පවතිී... කරුණාකර මද වෙලාවක් රැඳී සිටින්න.";
-            audioControls.style.display = 'none';
-            
-            if (currentStoryAudio) {
-                currentStoryAudio.pause();
-                currentStoryAudio = null;
-            }
-
             const studentName = currentStudentData.name;
             const storyPrompt = `Write a LONG bedtime story (minimum 500 words) in Sinhala for a child named ${studentName}. The story should be about ${studentName} going on a magical adventure. Use simple grammar suitable for a 3-5 year old. Soothing and calm tone. Start with "එකමත් එක රටක ${studentName} කියලා බබෙක් හිටියා...".`;
 
@@ -490,8 +489,10 @@
             } catch (e) {
                 console.error("Cute AI Error:", e);
                 storyText.textContent = "සමාවන්න, සේවාදායකයේ දෝෂයක් පවතී.";
+            } finally {
+                isStoryLoading = false;
             }
-        };
+        }
 
         function base64ToWavBlob(base64, sampleRate) {
             const binaryString = atob(base64);
@@ -533,9 +534,9 @@
                     document.getElementById('notificationText').textContent = d.parentNote;
                 }
                 loadFeed(d.grade, d.classGroup);
-
-                // AUTOMATICALLY TRIGGER CUTE AI ON LOAD
-                window.handleCuteAI();
+                
+                // Trigger background loading immediately
+                preLoadCuteAI();
             }
         }
 
