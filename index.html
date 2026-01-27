@@ -190,6 +190,15 @@
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
 
+        // Dropbox ලින්ක් එක සෘජුවම පෙන්විය හැකි ලින්ක් එකක් බවට පත් කිරීමේ function එක
+        function fixDropboxUrl(url) {
+            if (!url) return "";
+            if (url.includes("dropbox.com")) {
+                return url.replace("?dl=0", "?raw=1").replace("&dl=0", "&raw=1");
+            }
+            return url;
+        }
+
         window.toggleTeacherMode = () => {
             const current = localStorage.getItem('teacherMode') === 'true';
             const newState = !current;
@@ -250,7 +259,8 @@
                     document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo} | Grade: ${data.grade}-${data.classGroup}`;
                     
                     if (data.photoUrl && data.photoUrl.trim() !== "") {
-                        document.getElementById('displayPhoto').src = data.photoUrl;
+                        // Dropbox ලින්ක් එක fix කර පින්තූරය ලෙස ලබා දීම
+                        document.getElementById('displayPhoto').src = fixDropboxUrl(data.photoUrl);
                     }
 
                     if(data.parentNote) {
@@ -320,7 +330,8 @@
                 const vid = post.videoUrl.split('v=')[1]?.split('&')[0] || post.videoUrl.split('/').pop();
                 mediaHTML = `<div class="video-container"><iframe src="https://www.youtube.com/embed/${vid}"></iframe></div>`;
             } else if (post.imageUrl && post.imageUrl.trim() !== "") {
-                mediaHTML = `<div class="post-media"><img src="${post.imageUrl}" onerror="this.parentElement.style.display='none'"></div>`;
+                // Post වල ඇති Dropbox ලින්ක් ද fix කර ලබා දීම
+                mediaHTML = `<div class="post-media"><img src="${fixDropboxUrl(post.imageUrl)}" onerror="this.parentElement.style.display='none'"></div>`;
             }
 
             postCard.innerHTML = `
