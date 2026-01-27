@@ -39,6 +39,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer; /* Clickable style */
         }
 
         .profile-img {
@@ -119,12 +120,35 @@
         .post-date { font-size: 11px; color: #999; padding: 10px 15px; text-align: right; }
 
         #loading { margin-top: 50px; text-align: center; font-weight: bold; color: #666; }
+
+        /* Image Overlay / Lightbox */
+        .image-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: zoom-out;
+        }
+        .image-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
     </style>
 </head>
 <body>
 
+    <!-- Image Preview Overlay -->
+    <div id="imageOverlay" class="image-overlay" onclick="closeImage()">
+        <img id="overlayImg" src="" alt="Full View">
+    </div>
+
     <div id="profileSection" class="profile-card" style="display:none;">
-        <div class="profile-img-container" id="imgContainer">
+        <div class="profile-img-container" id="imgContainer" onclick="openImage()">
             <span class="profile-placeholder" id="placeholderIcon">👤</span>
             <img id="displayPhoto" src="" alt="Profile" class="profile-img" onload="this.style.display='block'; document.getElementById('placeholderIcon').style.display='none';">
         </div>
@@ -178,6 +202,21 @@
             }
             return url;
         }
+
+        // Image Full View Functions
+        window.openImage = () => {
+            const img = document.getElementById('displayPhoto');
+            if (img && img.src && img.style.display !== 'none') {
+                document.getElementById('overlayImg').src = img.src;
+                document.getElementById('imageOverlay').style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // Disable scroll
+            }
+        };
+
+        window.closeImage = () => {
+            document.getElementById('imageOverlay').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Enable scroll
+        };
 
         if (studentId) {
             loadStudentData();
