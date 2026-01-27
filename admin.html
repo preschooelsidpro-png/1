@@ -72,10 +72,33 @@
         .post-item { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; position: relative; }
         .delete-btn { position: absolute; top: 10px; right: 10px; background: #ff4d4d; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 5px 10px; }
 
-        /* Attendance Table Styles */
+        /* Attendance Styles */
+        .today-box {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);
+        }
+        .today-box h4 { margin: 0; font-size: 16px; opacity: 0.9; }
+        .today-count { font-size: 36px; font-weight: bold; margin: 5px 0; }
+
+        .calendar-search {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+        }
+
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: left; font-size: 14px; }
-        th { background: #f8f9fa; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: left; font-size: 14px; }
+        th { background: #f8f9fa; color: #333; }
+        tr:nth-child(even) { background-color: #fafafa; }
+
+        small { color: #666; font-size: 12px; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -100,8 +123,9 @@
                 <textarea id="postBody" rows="4" placeholder="පණිවිඩය මෙතන ලියන්න..."></textarea>
             </div>
             <div class="form-group">
-                <label>පින්තූර ලින්ක් (Image URL - Optional)</label>
-                <input type="url" id="postImageUrl" placeholder="https://...">
+                <label>පින්තූර ලින්ක් එකතුව (Image Collection URLs)</label>
+                <textarea id="postImageUrls" rows="3" placeholder="පින්තූර ලින්ක් කිහිපයක් තිබේනම් එක පේළියට එක බැගින් ඇතුළත් කරන්න..."></textarea>
+                <small>Dropbox හෝ වෙනත් ඕනෑම පින්තූර ලින්ක් එකක් පේළියකට එක බැගින් ලබා දෙන්න.</small>
             </div>
             <div class="form-group">
                 <label>වීඩියෝ ලින්ක් (YouTube URL - Optional)</label>
@@ -160,7 +184,17 @@
 
         <!-- Section 3: View Attendance Log -->
         <div id="viewAttendance" class="form-section">
-            <h3>අද දින පැමිණීමේ ලේඛනය</h3>
+            <div class="today-box">
+                <h4>අද දින පැමිණීම (Today)</h4>
+                <div id="todayCount" class="today-count">0</div>
+                <div id="todayDateStr" style="font-size: 14px; opacity: 0.8;"></div>
+            </div>
+
+            <div class="calendar-search">
+                <label>වෙනත් දිනයක් තෝරන්න (Select Date):</label>
+                <input type="date" id="attendanceDatePicker" onchange="loadAttendanceByDate(this.value)">
+            </div>
+
             <div id="attendanceList">දත්ත ලබා ගනිමින්...</div>
         </div>
 
@@ -193,8 +227,13 @@
             document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
-            if(tabId === 'viewAttendance') loadAttendance();
+            if(event) event.target.classList.add('active');
+            if(tabId === 'viewAttendance') {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('attendanceDatePicker').value = today;
+                document.getElementById('todayDateStr').textContent = new Date().toDateString();
+                loadAttendanceByDate(today, true);
+            }
         };
 
         window.toggleTargetInput = () => {
@@ -211,17 +250,18 @@
         };
 
         document.getElementById('publishBtn').onclick = async () => {
-            const btn = document.getElementById('publishBtn');
             const type = document.getElementById('targetType').value;
             let val = 'global';
             if(type === 'grade') val = document.getElementById('gradeSelect').value;
             else if(type === 'class') val = document.getElementById('classSelect').value;
             else if(type === 'individual') val = document.getElementById('targetValueInput').value;
 
+            const imageLines = document.getElementById('postImageUrls').value.split('\n').filter(line => line.trim() !== "");
+
             const data = {
                 title: document.getElementById('postTitle').value,
                 body: document.getElementById('postBody').value,
-                imageUrl: document.getElementById('postImageUrl').value,
+                imageUrls: imageLines,
                 videoUrl: document.getElementById('postVideoUrl').value,
                 isAlert: document.getElementById('isAlert').checked,
                 targetType: type,
@@ -233,41 +273,68 @@
 
             try {
                 await addDoc(collection(db, "posts"), data);
+                alert("පෝස්ට් එක පල කරන ලදී!");
                 location.reload();
             } catch (e) { alert(e.message); }
         };
 
-        async function loadAttendance() {
+        document.getElementById('updateStudentBtn').onclick = async () => {
+            const sId = document.getElementById('manageStudentId').value;
+            const note = document.getElementById('parentNote').value;
+            if(!sId) return alert("Student ID missing");
+            try {
+                await updateDoc(doc(db, "students", sId), { parentNote: note });
+                alert("Note updated!");
+            } catch(e) { alert(e.message); }
+        };
+
+        window.loadAttendanceByDate = async (selectedDate, isInitial = false) => {
             const list = document.getElementById('attendanceList');
-            const today = new Date().toISOString().split('T')[0];
-            const q = query(collection(db, "attendance"), where("date", "==", today));
-            const snap = await getDocs(q);
+            const todayCountEl = document.getElementById('todayCount');
+            list.innerHTML = "දත්ත ලබා ගනිමින්...";
             
-            let html = '<table><tr><th>නම</th><th>වේලාව</th></tr>';
-            snap.forEach(doc => {
-                const d = doc.data();
-                html += `<tr><td>${d.studentName}</td><td>${d.time}</td></tr>`;
-            });
-            html += '</table>';
-            list.innerHTML = snap.empty ? 'අද දින කිසිදු පැමිණීමක් වාර්තා වී නැත.' : html;
-        }
+            try {
+                const q = query(collection(db, "attendance"), where("date", "==", selectedDate));
+                const snap = await getDocs(q);
+                
+                if(isInitial) todayCountEl.textContent = snap.size;
+
+                let html = `<h4>📅 ${selectedDate} දින පැමිණීම</h4>`;
+                html += '<table><tr><th>නම</th><th>වේලාව</th></tr>';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    html += `<tr><td>${d.studentName}</td><td>${d.time}</td></tr>`;
+                });
+                html += '</table>';
+                list.innerHTML = snap.empty ? `<p style="padding:20px; text-align:center; color:#999;">${selectedDate} දින කිසිදු පැමිණීමක් වාර්තා වී නැත.</p>` : html;
+            } catch (e) {
+                list.innerHTML = "දත්ත ලබා ගැනීමේදී දෝෂයක් ඇති විය.";
+            }
+        };
 
         async function loadPosts() {
             const listEl = document.getElementById('postsList');
-            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(5));
-            const snap = await getDocs(q);
-            listEl.innerHTML = '';
-            snap.forEach(postDoc => {
-                const d = postDoc.data();
-                const div = document.createElement('div');
-                div.className = 'post-item';
-                div.innerHTML = `<strong>${d.title}</strong> <button class="delete-btn" onclick="deletePost('${postDoc.id}')">මකන්න</button>`;
-                listEl.appendChild(div);
-            });
+            try {
+                const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10));
+                const snap = await getDocs(q);
+                listEl.innerHTML = '';
+                snap.forEach(postDoc => {
+                    const d = postDoc.data();
+                    const div = document.createElement('div');
+                    div.className = 'post-item';
+                    div.innerHTML = `<strong>${d.title}</strong> <button class="delete-btn" onclick="deletePost('${postDoc.id}')">මකන්න</button>`;
+                    listEl.appendChild(div);
+                });
+            } catch (e) {
+                listEl.innerHTML = "දත්ත පූරණය කළ නොහැක.";
+            }
         }
 
         window.deletePost = async (id) => {
-            if(confirm("Sure?")) { await deleteDoc(doc(db, "posts", id)); loadPosts(); }
+            if(confirm("මෙම පෝස්ට් එක මකා දැමීමට අවශ්‍යද?")) { 
+                await deleteDoc(doc(db, "posts", id)); 
+                loadPosts(); 
+            }
         };
 
         loadPosts();
