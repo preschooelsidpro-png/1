@@ -5,21 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher - Attendance Marker</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #eef2f3; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f0f2f5; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
         .status-box { margin-top: 20px; padding: 20px; border-radius: 10px; font-weight: bold; display: none; }
         .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .loading { background: #fff3cd; color: #856404; }
-        .pulse { animation: pulse-animation 2s infinite; }
-        @keyframes pulse-animation { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #e2e3e5; color: #383d41; }
+        
+        .scan-btn {
+            background: #007bff; color: white; border: none; padding: 15px 30px;
+            font-size: 18px; font-weight: bold; border-radius: 50px; cursor: pointer;
+            margin-top: 20px; transition: background 0.3s;
+        }
+        .scan-btn:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #log { margin-top: 20px; text-align: left; font-size: 13px; color: #666; max-height: 150px; overflow-y: auto; background: #fff; padding: 10px; border-radius: 10px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Attendance Marker</h2>
-        <p>කරුණාකර ශිෂ්‍යයාගේ NFC කාඩ්පත ස්කෑන් කරන්න.</p>
-        <div id="loader" class="pulse">📡 Waiting for Scan...</div>
+        <h2 style="color: #333;">ISIA Attendance</h2>
+        <p style="color: #666;">මෙම පේජ් එක විවෘතව පවතින විට කාඩ්පත ස්කෑන් කළහොත් ස්වයංක්‍රීයව පැමිණීම සටහන් වේ.</p>
+        
+        <button id="startBtn" class="scan-btn">Start Scanning 📡</button>
+        
         <div id="status" class="status-box"></div>
+        
+        <div id="log">
+            <strong>ස්කෑන් ඉතිහාසය:</strong>
+            <ul id="logList" style="list-style: none; padding: 0;"></ul>
+        </div>
     </div>
 
     <script type="module">
@@ -37,18 +55,53 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // NFC එකෙන් එන URL එකේ තියෙන ID එක අරගෙන Attendance සලකුණු කිරීමේ කාර්යය
-        async function markAttendance() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const studentId = urlParams.get('id');
+        const startBtn = document.getElementById('startBtn');
+        const status = document.getElementById('status');
+        const logList = document.getElementById('logList');
 
-            if (!studentId) return;
+        startBtn.onclick = async () => {
+            if (!('NDEFReader' in window)) {
+                showMessage("❌ සමාවන්න, ඔබේ දුරකථනය හෝ Browser එක NFC වලට සහය දක්වන්නේ නැත. කරුණාකර Android Chrome භාවිතා කරන්න.", "error");
+                return;
+            }
 
-            const status = document.getElementById('status');
-            status.style.display = "block";
-            status.className = "status-box loading";
-            status.innerText = "දත්ත පරීක්ෂා කරමින්...";
+            try {
+                const ndef = new NDEFReader();
+                await ndef.scan();
+                
+                startBtn.disabled = true;
+                startBtn.innerText = "📡 Scanning Active...";
+                showMessage("📡 දැන් කාඩ්පත ස්පර්ශ කරන්න...", "info");
 
+                ndef.addEventListener("reading", async ({ message, serialNumber }) => {
+                    // NFC එකෙන් URL එක කියවීම
+                    for (const record of message.records) {
+                        if (record.recordType === "url") {
+                            const decoder = new TextDecoder();
+                            const url = decoder.decode(record.data);
+                            const studentId = new URL(url).searchParams.get('id');
+                            
+                            if (studentId) {
+                                await processAttendance(studentId);
+                            } else {
+                                showMessage("❌ කාඩ්පතේ ID එකක් හමු වුණේ නැත.", "error");
+                            }
+                        }
+                    }
+                });
+
+                ndef.addEventListener("readingerror", () => {
+                    showMessage("❌ ස්කෑන් කිරීම අසාර්ථකයි. නැවත උත්සාහ කරන්න.", "error");
+                });
+
+            } catch (error) {
+                showMessage("❌ දෝෂයකි: " + error.message, "error");
+            }
+        };
+
+        async function processAttendance(studentId) {
+            showMessage("<div class='loader'></div> දත්ත පරීක්ෂා කරමින්...", "info");
+            
             try {
                 const studentSnap = await getDoc(doc(db, "students", studentId));
                 if (studentSnap.exists()) {
@@ -64,25 +117,30 @@
                         time: timeStr
                     });
 
-                    status.className = "status-box success";
-                    status.innerText = `✅ ${studentData.name} ගේ පැමිණීම සටහන් කළා!`;
+                    showMessage(`✅ ${studentData.name} ගේ පැමිණීම සටහන් කළා!`, "success");
+                    addToLog(studentData.name, timeStr);
                     
-                    // තත්පර 3කට පසු නැවත සූදානම් වෙන්න
-                    setTimeout(() => {
-                        status.style.display = "none";
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }, 3000);
-
+                    // තත්පර 2කට පසු නැවත Scanning Mode එකට යන්න
+                    setTimeout(() => showMessage("📡 මීළඟ කාඩ්පත සඳහා සූදානම්...", "info"), 2000);
                 } else {
-                    status.innerText = "❌ වලංගු නොවන ශිෂ්‍යයෙකි.";
+                    showMessage("❌ වලංගු නොවන ශිෂ්‍යයෙකි.", "error");
                 }
             } catch (e) {
-                status.innerText = "❌ දෝෂයකි: " + e.message;
+                showMessage("❌ දෝෂයකි: " + e.message, "error");
             }
         }
 
-        // පේජ් එක ලෝඩ් වෙද්දීම URL එකේ ID එකක් තියේද බලනවා
-        window.onload = markAttendance;
+        function showMessage(msg, type) {
+            status.style.display = "block";
+            status.className = `status-box ${type}`;
+            status.innerHTML = msg;
+        }
+
+        function addToLog(name, time) {
+            const li = document.createElement('li');
+            li.innerHTML = `• <b>${name}</b> - ${time}`;
+            logList.prepend(li);
+        }
     </script>
 </body>
 </html>
