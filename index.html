@@ -375,7 +375,7 @@
                 grade_label: "Grade"
             },
             ta: {
-                today_attendance: "இன்றைய வருகை",
+                today_attendance: "ඉன்றைய வருகை",
                 not_present: "வரவில்லை",
                 present: "வந்துள்ளார்",
                 time: "நேரம்",
@@ -444,7 +444,7 @@
 
         window.playStoryAudio = () => {
             if (currentStoryAudio) {
-                currentStoryAudio.play();
+                currentStoryAudio.play().catch(e => console.error("Playback failed", e));
             }
         };
 
@@ -458,12 +458,15 @@
             modal.style.display = 'flex';
             storyText.textContent = "🪄 කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න.";
             audioControls.style.display = 'none';
-            if (currentStoryAudio) currentStoryAudio.pause();
+            if (currentStoryAudio) {
+                currentStoryAudio.pause();
+                currentStoryAudio = null;
+            }
 
             const studentName = currentStudentData.name;
-            const prompt = `Write a very short, cute, and inspiring story in English for a preschool child named ${studentName}. In this story, ${studentName} is the hero who does a good deed today (like helping a friend or cleaning up). Use very simple grammar and words suitable for a 3-year-old. Make it sound like a magical bedtime story. Return only the story text.`;
+            const prompt = `Tell a short story (4-5 simple sentences) about a preschool child named ${studentName}. Today ${studentName} did a very good thing, like sharing a toy or saying "Thank you". Use very easy English and simple grammar for a 3-year-old. Make it sound warm and lovely. Only output the story.`;
 
-            const apiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs";
+            const apiKey = ""; // API key is handled by the environment
             
             try {
                 // Step 1: Generate Story Text
@@ -472,7 +475,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { parts: [{ text: "You are a friendly preschool teacher who tells magical stories in simple English." }] }
+                        systemInstruction: { parts: [{ text: "You are a warm preschool teacher telling a magical story in simple English." }] }
                     })
                 });
 
@@ -487,19 +490,22 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: `Say in a magical, friendly, storytelling voice: ${aiText}` }] }],
+                            contents: [{ parts: [{ text: `Say in a magical, cheerful storytelling voice: ${aiText}` }] }],
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } }
-                            }
+                            },
+                            model: "gemini-2.5-flash-preview-tts"
                         })
                     });
 
                     const ttsResult = await ttsResponse.json();
-                    const audioBase64 = ttsResult.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+                    const audioData = ttsResult.candidates?.[0]?.content?.parts?.[0]?.inlineData;
 
-                    if (audioBase64) {
-                        const audioBlob = base64ToWavBlob(audioBase64, 24000);
+                    if (audioData && audioData.data) {
+                        // Extract sample rate from mimeType if available (defaulting to 24000)
+                        const sampleRate = parseInt(audioData.mimeType?.match(/rate=(\d+)/)?.[1] || "24000");
+                        const audioBlob = base64ToWavBlob(audioData.data, sampleRate);
                         const audioUrl = URL.createObjectURL(audioBlob);
                         currentStoryAudio = new Audio(audioUrl);
                         audioControls.style.display = 'flex';
@@ -509,37 +515,45 @@
                 }
             } catch (e) {
                 console.error(e);
-                storyText.textContent = "ජාල දෝෂයකි. කරුණාකර ඔබගේ අන්තර්ජාල සබඳතාව පරීක්ෂා කරන්න.";
+                storyText.textContent = "දෝෂයකි. කරුණාකර නැවත උත්සාහ කරන්න.";
             }
         };
 
-        // Helper to convert PCM to WAV
+        // Standard PCM-to-WAV converter for Gemini TTS playback
         function base64ToWavBlob(base64, sampleRate) {
             const binaryString = atob(base64);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
             
-            const wavHeader = new ArrayBuffer(44);
-            const view = new DataView(wavHeader);
+            const buffer = new ArrayBuffer(44 + bytes.length);
+            const view = new DataView(buffer);
+            
             const writeString = (offset, string) => {
-                for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
             };
+            
             writeString(0, 'RIFF');
-            view.setUint32(4, 36 + bytes.length, true);
+            view.setUint32(4, 32 + bytes.length, true);
             writeString(8, 'WAVE');
             writeString(12, 'fmt ');
             view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, 1, true);
+            view.setUint16(20, 1, true); // PCM
+            view.setUint16(22, 1, true); // Mono
             view.setUint32(24, sampleRate, true);
             view.setUint32(28, sampleRate * 2, true);
             view.setUint16(32, 2, true);
             view.setUint16(34, 16, true);
             writeString(36, 'data');
             view.setUint32(40, bytes.length, true);
-
-            return new Blob([wavHeader, bytes], { type: 'audio/wav' });
+            
+            const blobData = new Uint8Array(buffer);
+            blobData.set(bytes, 44);
+            
+            return new Blob([blobData], { type: 'audio/wav' });
         }
 
         async function loadSettings() {
