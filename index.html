@@ -5,18 +5,98 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ISIA - Student Profile</title>
     <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-sub: #666666;
+            --border-color: #e9ecef;
+            --accent-color: #28a745;
+            --top-bar-btn: rgba(255, 255, 255, 0.8);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-sub: #b0b0b0;
+            --border-color: #333333;
+            --accent-color: #4cd137;
+            --top-bar-btn: rgba(45, 45, 45, 0.8);
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        /* Modern Top Controls */
+        .top-bar {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .lang-select {
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: var(--top-bar-btn);
+            backdrop-filter: blur(10px);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .lang-select:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+
+        .theme-toggle {
+            background: var(--top-bar-btn);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .theme-toggle:hover {
+            background: var(--card-bg);
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .profile-card {
-            background: white;
+            background: var(--card-bg);
             width: 100%;
             max-width: 500px;
             padding: 20px;
@@ -32,28 +112,29 @@
             height: 110px;
             margin: 0 auto 10px auto;
             border-radius: 50%;
-            border: 4px solid #28a745;
+            border: 4px solid var(--accent-color);
             overflow: hidden;
             background: #e9ecef;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
         }
 
         .profile-img { width: 100%; height: 100%; object-fit: cover; display: none; }
         .profile-placeholder { font-size: 50px; color: #adb5bd; }
-        .student-name { font-size: 22px; font-weight: bold; color: #333; margin: 5px 0; }
-        .student-info { color: #666; font-size: 14px; margin-bottom: 15px; }
+        .student-name { font-size: 22px; font-weight: bold; color: var(--text-main); margin: 5px 0; }
+        .student-info { color: var(--text-sub); font-size: 14px; margin-bottom: 15px; }
 
         .attendance-card {
             width: 90%; max-width: 460px;
-            background: linear-gradient(135deg, #00b09b, #96c93d);
-            color: white; padding: 15px; border-radius: 15px; margin-bottom: 15px;
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white; padding: 18px; border-radius: 18px; margin-bottom: 15px;
             display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.25);
         }
-        .attendance-label { font-size: 13px; opacity: 0.9; }
+        .attendance-label { font-size: 13px; opacity: 0.9; margin-bottom: 4px; }
         .attendance-status { font-size: 18px; font-weight: bold; }
 
         .notification-box {
@@ -61,33 +142,28 @@
             background: #fff3cd; border-left: 5px solid #ffc107;
             padding: 15px; margin-bottom: 20px; border-radius: 8px; display: none;
         }
+        [data-theme="dark"] .notification-box {
+            background: #2c2510; border-left: 5px solid #ffc107;
+            color: #ffc107;
+        }
 
         .feed-container { width: 95%; max-width: 500px; padding-bottom: 50px; }
 
         /* Post & Gallery Styles */
-        .post-card { background: white; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; }
+        .post-card { background: var(--card-bg); border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); }
         .post-content { padding: 15px; }
-        .post-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 8px; }
-        .post-body { font-size: 14px; color: #555; line-height: 1.5; white-space: pre-wrap; }
+        .post-title { font-size: 18px; font-weight: bold; color: var(--text-main); margin-bottom: 8px; }
+        .post-body { font-size: 14px; color: var(--text-sub); line-height: 1.5; white-space: pre-wrap; }
         
-        /* Smooth Gallery Layout */
         .gallery-container {
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            gap: 10px;
-            padding: 10px;
+            display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 10px;
             -ms-overflow-style: none; scrollbar-width: none;
         }
         .gallery-container::-webkit-scrollbar { display: none; }
         
         .gallery-item {
-            flex: 0 0 85%;
-            scroll-snap-align: center;
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            flex: 0 0 85%; scroll-snap-align: center; border-radius: 12px; overflow: hidden;
+            cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .gallery-item img { width: 100%; height: 250px; object-fit: cover; display: block; }
 
@@ -107,7 +183,19 @@
         .image-overlay.active img { transform: scale(1); }
     </style>
 </head>
-<body>
+<body data-theme="light">
+
+    <!-- Modern Top Bar -->
+    <div class="top-bar">
+        <select class="lang-select" id="langSelector" onchange="changeLanguage(this.value)">
+            <option value="si">සිංහල</option>
+            <option value="en">English</option>
+            <option value="ta">தமிழ்</option>
+        </select>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+            <span>🌙</span> Dark
+        </button>
+    </div>
 
     <div id="imageOverlay" class="image-overlay" onclick="closeImage()">
         <img id="overlayImg" src="" alt="Full View">
@@ -119,23 +207,23 @@
             <img id="displayPhoto" src="" alt="Profile" class="profile-img" onload="this.style.display='block'; document.getElementById('placeholderIcon').style.display='none';">
         </div>
         <div id="displayName" class="student-name">Loading...</div>
-        <div id="displayDetails" class="student-info">Admission No: -- | Grade: --</div>
+        <div id="displayDetails" class="student-info" data-i18n="loading">Admission No: -- | Grade: --</div>
     </div>
 
     <div id="attendanceCard" class="attendance-card" style="display:none;">
         <div>
-            <div class="attendance-label">අද දින පැමිණීම</div>
-            <div id="attendanceStatus" class="attendance-status">පැමිණ නැත</div>
+            <div class="attendance-label" data-i18n="today_attendance">අද දින පැමිණීම</div>
+            <div id="attendanceStatus" class="attendance-status" data-i18n="not_present">පැමිණ නැත</div>
         </div>
         <div style="text-align: right;">
-            <div class="attendance-label">වේලාව</div>
+            <div class="attendance-label" data-i18n="time">වේලාව</div>
             <div id="attendanceTime" class="attendance-status">--:--</div>
         </div>
     </div>
 
     <div id="notificationBox" class="notification-box">
-        <div style="font-weight:bold; color:#856404; margin-bottom:5px;">⚠️ වැදගත් පණිවිඩයකි</div>
-        <div id="notificationText" style="font-size:14px; color:#856404;"></div>
+        <div style="font-weight:bold; margin-bottom:5px;" data-i18n="important_note">⚠️ වැදගත් පණිවිඩයකි</div>
+        <div id="notificationText" style="font-size:14px;"></div>
     </div>
 
     <div id="feed" class="feed-container"></div>
@@ -158,6 +246,67 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
+
+        const translations = {
+            si: {
+                today_attendance: "අද දින පැමිණීම",
+                not_present: "පැමිණ නැත",
+                present: "පැමිණ ඇත",
+                time: "වේලාව",
+                important_note: "⚠️ වැදගත් පණිවිඩයකි",
+                loading: "පූරණය වෙමින්...",
+                admission_label: "අංකය",
+                grade_label: "ශ්‍රේණිය"
+            },
+            en: {
+                today_attendance: "Today's Attendance",
+                not_present: "Absent",
+                present: "Present",
+                time: "Time",
+                important_note: "⚠️ Important Note",
+                loading: "Loading...",
+                admission_label: "ID",
+                grade_label: "Grade"
+            },
+            ta: {
+                today_attendance: "இன்றைய வருகை",
+                not_present: "வரவில்லை",
+                present: "வந்துள்ளார்",
+                time: "நேரம்",
+                important_note: "⚠️ முக்கியமான செய்தி",
+                loading: "ஏற்றப்படுகிறது...",
+                admission_label: "இலக்கம்",
+                grade_label: "வகுப்பு"
+            }
+        };
+
+        window.toggleTheme = () => {
+            const body = document.body;
+            const btn = document.getElementById('themeBtn');
+            if (body.getAttribute('data-theme') === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                btn.innerHTML = "<span>☀️</span> Light";
+            } else {
+                body.setAttribute('data-theme', 'light');
+                btn.innerHTML = "<span>🌙</span> Dark";
+            }
+        };
+
+        window.changeLanguage = (lang) => {
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            const statusText = document.getElementById('attendanceStatus').textContent;
+            if (statusText === translations.si.present || statusText === translations.en.present || statusText === translations.ta.present) {
+                document.getElementById('attendanceStatus').textContent = translations[lang].present;
+            } else {
+                document.getElementById('attendanceStatus').textContent = translations[lang].not_present;
+            }
+        };
 
         function fixUrl(url) {
             if (!url) return "";
@@ -187,9 +336,10 @@
             const snap = await getDoc(doc(db, "students", studentId));
             if (snap.exists()) {
                 const d = snap.data();
+                const lang = document.getElementById('langSelector').value;
                 document.getElementById('profileSection').style.display = 'block';
                 document.getElementById('displayName').textContent = d.name;
-                document.getElementById('displayDetails').textContent = `ID: ${d.admissionNo} | ශ්‍රේණිය: ${d.grade}`;
+                document.getElementById('displayDetails').textContent = `${translations[lang].admission_label}: ${d.admissionNo} | ${translations[lang].grade_label}: ${d.grade}`;
                 if(d.photoUrl) document.getElementById('displayPhoto').src = fixUrl(d.photoUrl);
                 if(d.parentNote) {
                     document.getElementById('notificationBox').style.display = 'block';
@@ -200,13 +350,14 @@
         }
 
         async function loadAttendance() {
+            const lang = document.getElementById('langSelector').value;
             const today = new Date().toISOString().split('T')[0];
             const q = query(collection(db, "attendance"), where("studentId", "==", studentId), where("date", "==", today));
             const snap = await getDocs(q);
             document.getElementById('attendanceCard').style.display = 'flex';
             if (!snap.empty) {
                 const ad = snap.docs[0].data();
-                document.getElementById('attendanceStatus').textContent = "පැමිණ ඇත";
+                document.getElementById('attendanceStatus').textContent = translations[lang].present;
                 document.getElementById('attendanceTime').textContent = ad.time;
             }
         }
