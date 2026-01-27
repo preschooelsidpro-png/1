@@ -13,6 +13,8 @@
             --border-color: #e9ecef;
             --accent-color: #28a745;
             --top-bar-btn: rgba(255, 255, 255, 0.8);
+            --cute-tv-grad: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            --cute-ai-grad: linear-gradient(135deg, #4facfe, #00f2fe);
         }
 
         [data-theme="dark"] {
@@ -127,6 +129,41 @@
         .student-name { font-size: 22px; font-weight: bold; color: var(--text-main); margin: 5px 0; }
         .student-info { color: var(--text-sub); font-size: 14px; margin-bottom: 15px; }
 
+        /* Cute Buttons Container */
+        .cute-buttons-container {
+            width: 90%;
+            max-width: 460px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .cute-btn {
+            padding: 15px;
+            border-radius: 20px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-decoration: none;
+        }
+
+        .cute-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .cute-btn.tv { background: var(--cute-tv-grad); }
+        .cute-btn.ai { background: var(--cute-ai-grad); }
+
         .attendance-card {
             width: 90%; max-width: 460px;
             background: linear-gradient(135deg, #28a745, #1e7e34);
@@ -208,6 +245,16 @@
         </div>
         <div id="displayName" class="student-name">Loading...</div>
         <div id="displayDetails" class="student-info" data-i18n="loading">Admission No: -- | Grade: --</div>
+    </div>
+
+    <!-- Cute Buttons Section -->
+    <div class="cute-buttons-container">
+        <a id="cuteTvBtn" href="#" target="_blank" class="cute-btn tv">
+            <span>📺</span> Cute TV
+        </a>
+        <button class="cute-btn ai" onclick="handleCuteAI()">
+            <span>🤖</span> Cute AI
+        </button>
     </div>
 
     <div id="attendanceCard" class="attendance-card" style="display:none;">
@@ -327,9 +374,27 @@
             setTimeout(() => { overlay.style.display = 'none'; document.body.style.overflow = 'auto'; }, 300);
         };
 
+        window.handleCuteAI = () => {
+            // Placeholder for AI functionality
+            console.log("Cute AI Clicked - Placeholder for future update");
+        };
+
+        async function loadSettings() {
+            try {
+                const snap = await getDoc(doc(db, "settings", "links"));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.cuteTvUrl) {
+                        document.getElementById('cuteTvBtn').href = data.cuteTvUrl;
+                    }
+                }
+            } catch (e) { console.error("Error loading settings:", e); }
+        }
+
         if (studentId) {
             loadStudent();
             loadAttendance();
+            loadSettings();
         }
 
         async function loadStudent() {
