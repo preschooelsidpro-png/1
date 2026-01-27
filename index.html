@@ -192,29 +192,32 @@
             box-sizing: border-box;
         }
         .ai-modal-content {
-            background: var(--card-bg); width: 100%; max-width: 450px;
+            background: var(--card-bg); width: 100%; max-width: 480px;
             padding: 25px; border-radius: 25px; position: relative;
-            max-height: 80vh; overflow-y: auto; text-align: left;
+            max-height: 85vh; overflow-y: auto; text-align: left;
+            display: flex; flex-direction: column;
         }
-        .ai-modal-title { color: #d63384; font-size: 20px; font-weight: bold; margin-bottom: 15px; text-align: center; }
-        .ai-story-text { line-height: 1.6; font-size: 15px; color: var(--text-main); white-space: pre-wrap; }
-        .close-ai { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; color: var(--text-sub); }
+        .ai-modal-title { color: #d63384; font-size: 22px; font-weight: bold; margin-bottom: 15px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .ai-story-text { line-height: 1.8; font-size: 16px; color: var(--text-main); white-space: pre-wrap; margin-bottom: 20px; }
+        .close-ai { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; color: var(--text-sub); z-index: 10; }
 
         .audio-controls {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 15px;
-            margin-top: 20px;
             padding-top: 15px;
             border-top: 1px dashed var(--border-color);
+            position: sticky;
+            bottom: 0;
+            background: var(--card-bg);
         }
 
         .play-btn {
             background: #d63384;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 50px;
             font-weight: bold;
             cursor: pointer;
@@ -284,7 +287,7 @@
     <div id="aiModal" class="ai-modal">
         <div class="ai-modal-content">
             <span class="close-ai" onclick="closeAIModal()">✖</span>
-            <div class="ai-modal-title">✨ Cute AI Story Crafter</div>
+            <div class="ai-modal-title">✨ Bedtime Story Crafter</div>
             <div id="aiStoryText" class="ai-story-text">කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න. 🪄</div>
             
             <div id="audioControls" class="audio-controls" style="display: none;">
@@ -448,7 +451,6 @@
             }
         };
 
-        // Helper for exponential backoff retries
         async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
             for (let i = 0; i < retries; i++) {
                 try {
@@ -470,7 +472,7 @@
             const audioControls = document.getElementById('audioControls');
             
             modal.style.display = 'flex';
-            storyText.textContent = "🪄 කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න.";
+            storyText.textContent = "🪄 දිගු ලස්සන කතාවක් නිර්මාණය කරමින් පවතිී... කරුණාකර මද වෙලාවක් රැඳී සිටින්න. (මෙයට ස්වල්ප වේලාවක් ගත විය හැක)";
             audioControls.style.display = 'none';
             
             if (currentStoryAudio) {
@@ -479,10 +481,18 @@
             }
 
             const studentName = currentStudentData.name;
-            const storyPrompt = `Tell a short story (4-5 simple sentences) about a preschool child named ${studentName}. Today ${studentName} did a very good thing, like sharing a toy or saying "Thank you". Use very easy English and simple grammar for a 3-year-old. Make it sound warm and lovely. Only output the story.`;
+            // Updated Prompt to ensure LONG story and SIMPLE grammar as requested
+            const storyPrompt = `Write a LONG bedtime story (minimum 500 words) in Sinhala for a child named ${studentName}. 
+            The story should be about ${studentName} going on a magical adventure. 
+            CRITICAL RULES:
+            1. Use very SIMPLE grammar (Sarla Vyakarana).
+            2. Language must be suitable for a 3-5 year old.
+            3. Make it soothing and calm.
+            4. Start with "එකමත් එක රටක ${studentName} කියලා බබෙක් හිටියා...".
+            5. The story must be long and detailed.
+            Only output the Sinhala story text.`;
 
-            // Updated API Key from user instructions
-            const apiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs"; 
+            const apiKey = ""; // API Key provided at runtime
             
             try {
                 // Step 1: Generate Story Text with Retries
@@ -491,7 +501,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: storyPrompt }] }],
-                        systemInstruction: { parts: [{ text: "You are a warm preschool teacher telling a magical story in simple English." }] }
+                        systemInstruction: { parts: [{ text: "You are a world-class children's storyteller. You write long, engaging, and extremely simple bedtime stories in Sinhala." }] }
                     })
                 });
 
@@ -500,12 +510,12 @@
                 if (aiText) {
                     storyText.textContent = aiText;
                     
-                    // Step 2: Generate Speech (TTS) with Retries
+                    // Step 2: Generate Speech (TTS) for the generated story
                     const ttsResult = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: `Say in a magical, cheerful storytelling voice: ${aiText}` }] }],
+                            contents: [{ parts: [{ text: `Say in a magical, soothing storytelling voice: ${aiText.substring(0, 1000)}` }] }], // Substring to avoid TTS limit if very long
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } }
@@ -532,40 +542,34 @@
             }
         };
 
-        // Standard PCM-to-WAV converter for Gemini TTS playback
         function base64ToWavBlob(base64, sampleRate) {
             const binaryString = atob(base64);
             const bytes = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
                 bytes[i] = binaryString.charCodeAt(i);
             }
-            
             const buffer = new ArrayBuffer(44 + bytes.length);
             const view = new DataView(buffer);
-            
             const writeString = (offset, string) => {
                 for (let i = 0; i < string.length; i++) {
                     view.setUint8(offset + i, string.charCodeAt(i));
                 }
             };
-            
             writeString(0, 'RIFF');
             view.setUint32(4, 32 + bytes.length, true);
             writeString(8, 'WAVE');
             writeString(12, 'fmt ');
             view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true); // PCM
-            view.setUint16(22, 1, true); // Mono
+            view.setUint16(20, 1, true); 
+            view.setUint16(22, 1, true); 
             view.setUint32(24, sampleRate, true);
             view.setUint32(28, sampleRate * 2, true);
             view.setUint16(32, 2, true);
             view.setUint16(34, 16, true);
             writeString(36, 'data');
             view.setUint32(40, bytes.length, true);
-            
             const blobData = new Uint8Array(buffer);
             blobData.set(bytes, 44);
-            
             return new Blob([blobData], { type: 'audio/wav' });
         }
 
@@ -623,14 +627,12 @@
             const snap = await getDocs(q);
             const feed = document.getElementById('feed');
             feed.innerHTML = '';
-
             snap.forEach(doc => {
                 const p = doc.data();
                 let canSee = p.targetType === 'all' || 
                              (p.targetType === 'grade' && p.targetValue == grade) ||
                              (p.targetType === 'class' && p.targetValue == `${grade}-${classGroup}`) ||
                              (p.targetType === 'individual' && p.targetValue == studentId);
-                
                 if(canSee) renderPost(p);
             });
         }
@@ -638,7 +640,6 @@
         function renderPost(post) {
             const card = document.createElement('div');
             card.className = 'post-card';
-            
             let mediaHtml = '';
             if (post.videoUrl) {
                 const vid = post.videoUrl.split('v=')[1]?.split('&')[0] || post.videoUrl.split('/').pop();
@@ -654,7 +655,6 @@
                 const fUrl = fixUrl(post.imageUrl);
                 mediaHtml += `<div style="cursor:pointer" onclick="openImage('${fUrl}')"><img src="${fUrl}" style="width:100%"></div>`;
             }
-
             card.innerHTML = `
                 <div class="post-content">
                     <div class="post-title" style="${post.isAlert ? 'color:#d9534f' : ''}">${post.title}</div>
