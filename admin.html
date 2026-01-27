@@ -71,6 +71,11 @@
         .recent-posts { margin-top: 30px; width: 100%; }
         .post-item { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee; position: relative; }
         .delete-btn { position: absolute; top: 10px; right: 10px; background: #ff4d4d; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 5px 10px; }
+
+        /* Attendance Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: left; font-size: 14px; }
+        th { background: #f8f9fa; }
     </style>
 </head>
 <body>
@@ -81,6 +86,7 @@
         <div class="tab-buttons">
             <button class="tab-btn active" onclick="showTab('newPost')">නව පෝස්ට් එකක්</button>
             <button class="tab-btn" onclick="showTab('manageStudent')">ශිෂ්‍ය පණිවිඩ</button>
+            <button class="tab-btn" onclick="showTab('viewAttendance')">පැමිණීමේ වාර්තා</button>
         </div>
 
         <!-- Section 1: Create New Post -->
@@ -117,46 +123,22 @@
                 </select>
             </div>
             
-            <!-- Dynamic Selection Inputs -->
             <div id="targetValueDiv" class="form-group" style="display:none;">
                 <label id="targetLabel">අදාළ අගය (Target Value)</label>
-                
-                <!-- Grade Select (Hidden by default) -->
                 <select id="gradeSelect" style="display:none;">
                     <option value="Preschool">Preschool</option>
-                    <option value="2+">Grade 2+</option>
-                    <option value="3+">Grade 3+</option>
-                    <option value="4+">Grade 4+</option>
-                    <option value="1">Grade 1</option>
-                    <option value="2">Grade 2</option>
-                    <option value="3">Grade 3</option>
-                    <option value="4">Grade 4</option>
-                    <option value="5">Grade 5</option>
-                    <option value="6">Grade 6</option>
-                    <option value="7">Grade 7</option>
-                    <option value="8">Grade 8</option>
-                    <option value="9">Grade 9</option>
-                    <option value="10">Grade 10</option>
+                    <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                    <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                    <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                    <option value="7">Grade 7</option><option value="8">Grade 8</option>
+                    <option value="9">Grade 9</option><option value="10">Grade 10</option>
                     <option value="11">Grade 11</option>
                 </select>
-
-                <!-- Class Select (Hidden by default) -->
                 <select id="classSelect" style="display:none;">
-                    <!-- Common class tags, can be customized -->
-                    <option value="1-A">1-A</option><option value="1-B">1-B</option>
-                    <option value="2-A">2-A</option><option value="2-B">2-B</option>
-                    <option value="3-A">3-A</option><option value="3-B">3-B</option>
-                    <option value="4-A">4-A</option><option value="4-B">4-B</option>
-                    <option value="5-A">5-A</option><option value="5-B">5-B</option>
-                    <option value="6-A">6-A</option><option value="6-B">6-B</option>
-                    <option value="7-A">7-A</option><option value="7-B">7-B</option>
-                    <option value="8-A">8-A</option><option value="8-B">8-B</option>
-                    <option value="9-A">9-A</option><option value="9-B">9-B</option>
-                    <option value="10-A">10-A</option><option value="10-B">10-B</option>
-                    <option value="11-A">11-A</option><option value="11-B">11-B</option>
+                    <option value="1-A">1-A</option><option value="2-A">2-A</option>
+                    <option value="3-A">3-A</option><option value="4-A">4-A</option>
+                    <option value="5-A">5-A</option>
                 </select>
-
-                <!-- Individual ID input (Shown for individual) -->
                 <input type="text" id="targetValueInput" placeholder="Student ID" style="display:none;">
             </div>
 
@@ -176,6 +158,12 @@
             <button class="main-btn" style="background-color: #28a745;" id="updateStudentBtn">යාවත්කාලීන කරන්න (Update Note)</button>
         </div>
 
+        <!-- Section 3: View Attendance Log -->
+        <div id="viewAttendance" class="form-section">
+            <h3>අද දින පැමිණීමේ ලේඛනය</h3>
+            <div id="attendanceList">දත්ත ලබා ගනිමින්...</div>
+        </div>
+
         <div id="statusMsg"></div>
 
         <div class="recent-posts">
@@ -186,7 +174,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -201,54 +189,34 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Tab Switching
         window.showTab = (tabId) => {
             document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.target.classList.add('active');
+            if(tabId === 'viewAttendance') loadAttendance();
         };
 
         window.toggleTargetInput = () => {
             const type = document.getElementById('targetType').value;
             const container = document.getElementById('targetValueDiv');
-            const label = document.getElementById('targetLabel');
-            
             const gradeSelect = document.getElementById('gradeSelect');
             const classSelect = document.getElementById('classSelect');
             const idInput = document.getElementById('targetValueInput');
 
-            // Reset visibility
-            container.style.display = 'none';
-            gradeSelect.style.display = 'none';
-            classSelect.style.display = 'none';
-            idInput.style.display = 'none';
-
-            if(type === 'all') return;
-
-            container.style.display = 'block';
-            if(type === 'grade') {
-                label.innerText = "ශ්‍රේණිය තෝරන්න";
-                gradeSelect.style.display = 'block';
-            } else if(type === 'class') {
-                label.innerText = "පන්තිය තෝරන්න";
-                classSelect.style.display = 'block';
-            } else if(type === 'individual') {
-                label.innerText = "ශිෂ්‍ය ID එක ඇතුළත් කරන්න";
-                idInput.style.display = 'block';
-            }
+            container.style.display = type === 'all' ? 'none' : 'block';
+            gradeSelect.style.display = type === 'grade' ? 'block' : 'none';
+            classSelect.style.display = type === 'class' ? 'block' : 'none';
+            idInput.style.display = type === 'individual' ? 'block' : 'none';
         };
 
-        // Publish Post
         document.getElementById('publishBtn').onclick = async () => {
             const btn = document.getElementById('publishBtn');
-            const status = document.getElementById('statusMsg');
             const type = document.getElementById('targetType').value;
-            
-            let finalValue = 'global';
-            if(type === 'grade') finalValue = document.getElementById('gradeSelect').value;
-            else if(type === 'class') finalValue = document.getElementById('classSelect').value;
-            else if(type === 'individual') finalValue = document.getElementById('targetValueInput').value;
+            let val = 'global';
+            if(type === 'grade') val = document.getElementById('gradeSelect').value;
+            else if(type === 'class') val = document.getElementById('classSelect').value;
+            else if(type === 'individual') val = document.getElementById('targetValueInput').value;
 
             const data = {
                 title: document.getElementById('postTitle').value,
@@ -257,67 +225,49 @@
                 videoUrl: document.getElementById('postVideoUrl').value,
                 isAlert: document.getElementById('isAlert').checked,
                 targetType: type,
-                targetValue: finalValue,
+                targetValue: val,
                 createdAt: serverTimestamp()
             };
 
-            if(!data.title || !data.body) return alert("මාතෘකාව සහ විස්තරය අනිවාර්යයි!");
-            if(type !== 'all' && !finalValue) return alert("කරුණාකර ඉලක්කය (Target) තෝරන්න!");
+            if(!data.title || !data.body) return alert("Fields missing");
 
-            btn.disabled = true;
             try {
                 await addDoc(collection(db, "posts"), data);
-                status.innerText = "✅ පෝස්ට් එක සාර්ථකව පල කළා!";
-                status.style.display = "block";
-                status.style.background = "#d4edda";
-                setTimeout(() => location.reload(), 1500);
-            } catch (e) {
-                alert("දෝෂයකි: " + e.message);
-                btn.disabled = false;
-            }
+                location.reload();
+            } catch (e) { alert(e.message); }
         };
 
-        // Update Student Specific Note
-        document.getElementById('updateStudentBtn').onclick = async () => {
-            const studentId = document.getElementById('manageStudentId').value.trim();
-            const note = document.getElementById('parentNote').value;
-            
-            if(!studentId) return alert("කරුණාකර ශිෂ්‍ය ID එක ඇතුළත් කරන්න.");
-
-            try {
-                const studentRef = doc(db, "students", studentId);
-                await updateDoc(studentRef, { parentNote: note });
-                alert("✅ පණිවිඩය සාර්ථකව යාවත්කාලීන කළා!");
-            } catch (e) {
-                alert("දෝෂයකි: ශිෂ්‍යයා සොයාගත නොහැක.");
-            }
-        };
-
-        // Load Posts
-        async function loadPosts() {
-            const listEl = document.getElementById('postsList');
-            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10));
+        async function loadAttendance() {
+            const list = document.getElementById('attendanceList');
+            const today = new Date().toISOString().split('T')[0];
+            const q = query(collection(db, "attendance"), where("date", "==", today));
             const snap = await getDocs(q);
             
+            let html = '<table><tr><th>නම</th><th>වේලාව</th></tr>';
+            snap.forEach(doc => {
+                const d = doc.data();
+                html += `<tr><td>${d.studentName}</td><td>${d.time}</td></tr>`;
+            });
+            html += '</table>';
+            list.innerHTML = snap.empty ? 'අද දින කිසිදු පැමිණීමක් වාර්තා වී නැත.' : html;
+        }
+
+        async function loadPosts() {
+            const listEl = document.getElementById('postsList');
+            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(5));
+            const snap = await getDocs(q);
             listEl.innerHTML = '';
             snap.forEach(postDoc => {
                 const d = postDoc.data();
                 const div = document.createElement('div');
                 div.className = 'post-item';
-                div.innerHTML = `
-                    <strong>${d.title}</strong><br>
-                    <small>Target: ${d.targetType} (${d.targetValue})</small>
-                    <button class="delete-btn" onclick="deletePost('${postDoc.id}')">මකන්න</button>
-                `;
+                div.innerHTML = `<strong>${d.title}</strong> <button class="delete-btn" onclick="deletePost('${postDoc.id}')">මකන්න</button>`;
                 listEl.appendChild(div);
             });
         }
 
         window.deletePost = async (id) => {
-            if(confirm("මෙම පෝස්ට් එක මැකීමට ඔබට විශ්වාසද?")) {
-                await deleteDoc(doc(db, "posts", id));
-                loadPosts();
-            }
+            if(confirm("Sure?")) { await deleteDoc(doc(db, "posts", id)); loadPosts(); }
         };
 
         loadPosts();
