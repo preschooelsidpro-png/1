@@ -39,7 +39,6 @@
             transition: background 0.3s ease;
         }
 
-        /* Modern Top Controls */
         .top-bar {
             width: 100%;
             max-width: 500px;
@@ -129,7 +128,6 @@
         .student-name { font-size: 22px; font-weight: bold; color: var(--text-main); margin: 5px 0; }
         .student-info { color: var(--text-sub); font-size: 14px; margin-bottom: 15px; }
 
-        /* Cute Buttons Container */
         .cute-buttons-container {
             width: 90%;
             max-width: 460px;
@@ -184,7 +182,6 @@
             color: #ffc107;
         }
 
-        /* AI Story Modal */
         .ai-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 3000; display: none;
@@ -231,7 +228,6 @@
 
         .feed-container { width: 95%; max-width: 500px; padding-bottom: 50px; }
 
-        /* Post & Gallery Styles */
         .post-card { background: var(--card-bg); border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); }
         .post-content { padding: 15px; }
         .post-title { font-size: 18px; font-weight: bold; color: var(--text-main); margin-bottom: 8px; }
@@ -254,7 +250,6 @@
 
         .post-date { font-size: 11px; color: #999; padding: 10px 15px; text-align: right; }
 
-        /* Image Overlay */
         .image-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center;
@@ -267,7 +262,6 @@
 </head>
 <body data-theme="light">
 
-    <!-- Modern Top Bar -->
     <div class="top-bar">
         <select class="lang-select" id="langSelector" onchange="changeLanguage(this.value)">
             <option value="si">සිංහල</option>
@@ -283,7 +277,6 @@
         <img id="overlayImg" src="" alt="Full View">
     </div>
 
-    <!-- AI Story Modal -->
     <div id="aiModal" class="ai-modal">
         <div class="ai-modal-content">
             <span class="close-ai" onclick="closeAIModal()">✖</span>
@@ -307,7 +300,6 @@
         <div id="displayDetails" class="student-info" data-i18n="loading">Admission No: -- | Grade: --</div>
     </div>
 
-    <!-- Cute Buttons Section -->
     <div class="cute-buttons-container">
         <a id="cuteTvBtn" href="#" target="_blank" class="cute-btn tv">
             <span>📺</span> Cute TV
@@ -357,36 +349,9 @@
         let currentStoryAudio = null;
 
         const translations = {
-            si: {
-                today_attendance: "අද දින පැමිණීම",
-                not_present: "පැමිණ නැත",
-                present: "පැමිණ ඇත",
-                time: "වේලාව",
-                important_note: "⚠️ වැදගත් පණිවිඩයකි",
-                loading: "පූරණය වෙමින්...",
-                admission_label: "අංකය",
-                grade_label: "ශ්‍රේණිය"
-            },
-            en: {
-                today_attendance: "Today's Attendance",
-                not_present: "Absent",
-                present: "Present",
-                time: "Time",
-                important_note: "⚠️ Important Note",
-                loading: "Loading...",
-                admission_label: "ID",
-                grade_label: "Grade"
-            },
-            ta: {
-                today_attendance: "ඉන්‍රෛය වරුගෛ",
-                not_present: "වරවිල්ලෛ",
-                present: "වන්‍දුළ්ළාර්",
-                time: "නේරම්",
-                important_note: "⚠️ මුක්කියමාන සේයිදි",
-                loading: "ඒට්ටප්පඩුගිරදු...",
-                admission_label: "ඉලක්කම්",
-                grade_label: "වගුප්පු"
-            }
+            si: { today_attendance: "අද දින පැමිණීම", not_present: "පැමිණ නැත", present: "පැමිණ ඇත", time: "වේලාව", important_note: "⚠️ වැදගත් පණිවිඩයකි", loading: "පූරණය වෙමින්...", admission_label: "අංකය", grade_label: "ශ්‍රේණිය" },
+            en: { today_attendance: "Today's Attendance", not_present: "Absent", present: "Present", time: "Time", important_note: "⚠️ Important Note", loading: "Loading...", admission_label: "ID", grade_label: "Grade" },
+            ta: { today_attendance: "ඉන්‍රෛය වරුගෛ", not_present: "වරවිල්ලෛ", present: "වන්‍දුළ්ළාර්", time: "නේරම්", important_note: "⚠️ මුක්කියමාන සේයිදි", loading: "ඒට්ටප්පඩුගිරදු...", admission_label: "ඉලක්කම්", grade_label: "වගුප්පු" }
         };
 
         window.toggleTheme = () => {
@@ -405,15 +370,14 @@
             const elements = document.querySelectorAll('[data-i18n]');
             elements.forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {
-                    el.textContent = translations[lang][key];
-                }
+                if (translations[lang][key]) el.textContent = translations[lang][key];
             });
-            const statusText = document.getElementById('attendanceStatus').textContent;
-            if (statusText === translations.si.present || statusText === translations.en.present || statusText === translations.ta.present) {
-                document.getElementById('attendanceStatus').textContent = translations[lang].present;
+            const statusEl = document.getElementById('attendanceStatus');
+            const currentStatus = statusEl.textContent;
+            if (currentStatus === translations.si.present || currentStatus === translations.en.present || currentStatus === translations.ta.present) {
+                statusEl.textContent = translations[lang].present;
             } else {
-                document.getElementById('attendanceStatus').textContent = translations[lang].not_present;
+                statusEl.textContent = translations[lang].not_present;
             }
         };
 
@@ -436,7 +400,6 @@
             setTimeout(() => { overlay.style.display = 'none'; document.body.style.overflow = 'auto'; }, 300);
         };
 
-        // --- AI Story Crafter Integration ---
         window.closeAIModal = () => {
             document.getElementById('aiModal').style.display = 'none';
             if (currentStoryAudio) {
@@ -472,7 +435,7 @@
             const audioControls = document.getElementById('audioControls');
             
             modal.style.display = 'flex';
-            storyText.textContent = "🪄 දිගු ලස්සන කතාවක් නිර්මාණය කරමින් පවතිී... කරුණාකර මද වෙලාවක් රැඳී සිටින්න. (මෙයට ස්වල්ප වේලාවක් ගත විය හැක)";
+            storyText.textContent = "🪄 දිගු ලස්සන කතාවක් නිර්මාණය කරමින් පවතිී... කරුණාකර මද වෙලාවක් රැඳී සිටින්න.";
             audioControls.style.display = 'none';
             
             if (currentStoryAudio) {
@@ -481,27 +444,17 @@
             }
 
             const studentName = currentStudentData.name;
-            // Updated Prompt to ensure LONG story and SIMPLE grammar as requested
-            const storyPrompt = `Write a LONG bedtime story (minimum 500 words) in Sinhala for a child named ${studentName}. 
-            The story should be about ${studentName} going on a magical adventure. 
-            CRITICAL RULES:
-            1. Use very SIMPLE grammar (Sarla Vyakarana).
-            2. Language must be suitable for a 3-5 year old.
-            3. Make it soothing and calm.
-            4. Start with "එකමත් එක රටක ${studentName} කියලා බබෙක් හිටියා...".
-            5. The story must be long and detailed.
-            Only output the Sinhala story text.`;
+            const storyPrompt = `Write a LONG bedtime story (minimum 500 words) in Sinhala for a child named ${studentName}. The story should be about ${studentName} going on a magical adventure. Use simple grammar suitable for a 3-5 year old. Soothing and calm tone. Start with "එකමත් එක රටක ${studentName} කියලා බබෙක් හිටියා...".`;
 
-            const apiKey = ""; // API Key provided at runtime
+            const apiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs"; 
             
             try {
-                // Step 1: Generate Story Text with Retries
                 const result = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: storyPrompt }] }],
-                        systemInstruction: { parts: [{ text: "You are a world-class children's storyteller. You write long, engaging, and extremely simple bedtime stories in Sinhala." }] }
+                        systemInstruction: { parts: [{ text: "You are a children's storyteller. Write long, simple bedtime stories in Sinhala." }] }
                     })
                 });
 
@@ -510,12 +463,11 @@
                 if (aiText) {
                     storyText.textContent = aiText;
                     
-                    // Step 2: Generate Speech (TTS) for the generated story
                     const ttsResult = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: `Say in a magical, soothing storytelling voice: ${aiText.substring(0, 1000)}` }] }], // Substring to avoid TTS limit if very long
+                            contents: [{ parts: [{ text: `Say in a magical, soothing storytelling voice: ${aiText.substring(0, 1000)}` }] }],
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } }
@@ -525,7 +477,6 @@
                     });
 
                     const audioData = ttsResult.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-
                     if (audioData && audioData.data) {
                         const sampleRate = parseInt(audioData.mimeType?.match(/rate=(\d+)/)?.[1] || "24000");
                         const audioBlob = base64ToWavBlob(audioData.data, sampleRate);
@@ -534,42 +485,26 @@
                         audioControls.style.display = 'flex';
                     }
                 } else {
-                    storyText.textContent = "සමාවන්න, කතාව නිර්මාණය කිරීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න.";
+                    storyText.textContent = "සමාවන්න, කතාව නිර්මාණය කිරීමට නොහැකි විය.";
                 }
             } catch (e) {
                 console.error("Cute AI Error:", e);
-                storyText.textContent = "සමාවන්න, සේවාදායකයේ දෝෂයක් පවතී. කරුණාකර මද වේලාවකින් නැවත උත්සාහ කරන්න.";
+                storyText.textContent = "සමාවන්න, සේවාදායකයේ දෝෂයක් පවතී.";
             }
         };
 
         function base64ToWavBlob(base64, sampleRate) {
             const binaryString = atob(base64);
             const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
+            for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
             const buffer = new ArrayBuffer(44 + bytes.length);
             const view = new DataView(buffer);
-            const writeString = (offset, string) => {
-                for (let i = 0; i < string.length; i++) {
-                    view.setUint8(offset + i, string.charCodeAt(i));
-                }
-            };
-            writeString(0, 'RIFF');
-            view.setUint32(4, 32 + bytes.length, true);
-            writeString(8, 'WAVE');
-            writeString(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true); 
-            view.setUint16(22, 1, true); 
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * 2, true);
-            view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true);
-            writeString(36, 'data');
-            view.setUint32(40, bytes.length, true);
-            const blobData = new Uint8Array(buffer);
-            blobData.set(bytes, 44);
+            const writeString = (offset, string) => { for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i)); };
+            writeString(0, 'RIFF'); view.setUint32(4, 32 + bytes.length, true); writeString(8, 'WAVE'); writeString(12, 'fmt ');
+            view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true); view.setUint16(34, 16, true); writeString(36, 'data'); view.setUint32(40, bytes.length, true);
+            const blobData = new Uint8Array(buffer); blobData.set(bytes, 44);
             return new Blob([blobData], { type: 'audio/wav' });
         }
 
@@ -578,17 +513,9 @@
                 const snap = await getDoc(doc(db, "settings", "links"));
                 if (snap.exists()) {
                     const data = snap.data();
-                    if (data.cuteTvUrl) {
-                        document.getElementById('cuteTvBtn').href = data.cuteTvUrl;
-                    }
+                    if (data.cuteTvUrl) document.getElementById('cuteTvBtn').href = data.cuteTvUrl;
                 }
             } catch (e) { console.error("Error loading settings:", e); }
-        }
-
-        if (studentId) {
-            loadStudent();
-            loadAttendance();
-            loadSettings();
         }
 
         async function loadStudent() {
@@ -606,6 +533,9 @@
                     document.getElementById('notificationText').textContent = d.parentNote;
                 }
                 loadFeed(d.grade, d.classGroup);
+
+                // AUTOMATICALLY TRIGGER CUTE AI ON LOAD
+                window.handleCuteAI();
             }
         }
 
@@ -664,6 +594,12 @@
                 <div class="post-date">${post.createdAt ? new Date(post.createdAt.seconds*1000).toLocaleDateString() : ''}</div>
             `;
             document.getElementById('feed').appendChild(card);
+        }
+
+        if (studentId) {
+            loadStudent();
+            loadAttendance();
+            loadSettings();
         }
     </script>
 </body>
