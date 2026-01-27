@@ -25,8 +25,8 @@
         }
 
         h2 { text-align: center; color: #333; }
-        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: #eee; cursor: pointer; border-radius: 8px; font-weight: bold; }
+        .tab-buttons { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; overflow-x: auto; }
+        .tab-btn { flex: 0 0 auto; padding: 10px 15px; border: none; background: #eee; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 13px; }
         .tab-btn.active { background: #28a745; color: white; }
 
         .form-section { display: none; }
@@ -99,6 +99,14 @@
         tr:nth-child(even) { background-color: #fafafa; }
 
         small { color: #666; font-size: 12px; display: block; margin-top: 5px; }
+
+        /* Cute Settings Style */
+        .cute-settings-box {
+            background: #f0f7ff;
+            border: 2px dashed #007bff;
+            padding: 20px;
+            border-radius: 15px;
+        }
     </style>
 </head>
 <body>
@@ -110,6 +118,7 @@
             <button class="tab-btn active" onclick="showTab('newPost')">නව පෝස්ට් එකක්</button>
             <button class="tab-btn" onclick="showTab('manageStudent')">ශිෂ්‍ය පණිවිඩ</button>
             <button class="tab-btn" onclick="showTab('viewAttendance')">පැමිණීමේ වාර්තා</button>
+            <button class="tab-btn" onclick="showTab('cuteSettings')" style="background: #fff0f6; color: #d63384;">📺 Cute TV</button>
         </div>
 
         <!-- Section 1: Create New Post -->
@@ -198,9 +207,22 @@
             <div id="attendanceList">දත්ත ලබා ගනිමින්...</div>
         </div>
 
+        <!-- Section 4: Cute TV Settings -->
+        <div id="cuteSettings" class="form-section">
+            <div class="cute-settings-box">
+                <h3 style="margin-top:0; color: #d63384;">📺 Cute TV Settings</h3>
+                <div class="form-group">
+                    <label>YouTube Live Link</label>
+                    <input type="url" id="cuteTvLinkInput" placeholder="https://www.youtube.com/live/...">
+                    <small>මෙම ලින්ක් එක ශිෂ්‍යයාගේ 'Cute TV' බොත්තමට සම්බන්ධ වේ.</small>
+                </div>
+                <button class="main-btn" style="background-color: #d63384;" id="saveCuteTvBtn">ලින්ක් එක සුරකින්න (Save Link)</button>
+            </div>
+        </div>
+
         <div id="statusMsg"></div>
 
-        <div class="recent-posts">
+        <div class="recent-posts" id="recentPostsArea">
             <h3>මෑතකදී පල කළ පෝස්ට්</h3>
             <div id="postsList">දත්ත ලබා ගනිමින්...</div>
         </div>
@@ -208,7 +230,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc, setDoc, getDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -227,12 +249,30 @@
             document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            if(event) event.target.classList.add('active');
+            
+            // Highlight active button
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(btn => {
+                if(btn.getAttribute('onclick').includes(tabId)) btn.classList.add('active');
+            });
+
+            // Hide/Show recent posts list based on tab
+            const recentPostsArea = document.getElementById('recentPostsArea');
+            if(tabId === 'cuteSettings' || tabId === 'viewAttendance') {
+                recentPostsArea.style.display = 'none';
+            } else {
+                recentPostsArea.style.display = 'block';
+            }
+
             if(tabId === 'viewAttendance') {
                 const today = new Date().toISOString().split('T')[0];
                 document.getElementById('attendanceDatePicker').value = today;
                 document.getElementById('todayDateStr').textContent = new Date().toDateString();
                 loadAttendanceByDate(today, true);
+            }
+
+            if(tabId === 'cuteSettings') {
+                loadCurrentCuteTvLink();
             }
         };
 
@@ -249,6 +289,27 @@
             idInput.style.display = type === 'individual' ? 'block' : 'none';
         };
 
+        // --- Cute TV Functionality ---
+        async function loadCurrentCuteTvLink() {
+            try {
+                const snap = await getDoc(doc(db, "settings", "links"));
+                if(snap.exists()) {
+                    document.getElementById('cuteTvLinkInput').value = snap.data().cuteTvUrl || "";
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        document.getElementById('saveCuteTvBtn').onclick = async () => {
+            const link = document.getElementById('cuteTvLinkInput').value;
+            if(!link) return alert("කරුණාකර YouTube Link එක ඇතුළත් කරන්න.");
+            
+            try {
+                await setDoc(doc(db, "settings", "links"), { cuteTvUrl: link }, { merge: true });
+                alert("Cute TV ලින්ක් එක සාර්ථකව සුරැකූ අතර සියලුම ශිෂ්‍ය පිටුවල යාවත්කාලීන වනු ඇත.");
+            } catch(e) { alert("දෝෂයකි: " + e.message); }
+        };
+
+        // --- Existing Post & Attendance Logic ---
         document.getElementById('publishBtn').onclick = async () => {
             const type = document.getElementById('targetType').value;
             let val = 'global';
