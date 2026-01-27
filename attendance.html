@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher - Attendance Marker</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #eef2f3; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .status-box { margin-top: 20px; padding: 20px; border-radius: 10px; font-weight: bold; display: none; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .loading { background: #fff3cd; color: #856404; }
+        .pulse { animation: pulse-animation 2s infinite; }
+        @keyframes pulse-animation { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Attendance Marker</h2>
+        <p>කරුණාකර ශිෂ්‍යයාගේ NFC කාඩ්පත ස්කෑන් කරන්න.</p>
+        <div id="loader" class="pulse">📡 Waiting for Scan...</div>
+        <div id="status" class="status-box"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
+            authDomain: "isia-4324b.firebaseapp.com",
+            projectId: "isia-4324b",
+            storageBucket: "isia-4324b.firebasestorage.app",
+            appId: "1:981887431122:web:8e96c34367cb4228ff980b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // NFC එකෙන් එන URL එකේ තියෙන ID එක අරගෙන Attendance සලකුණු කිරීමේ කාර්යය
+        async function markAttendance() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentId = urlParams.get('id');
+
+            if (!studentId) return;
+
+            const status = document.getElementById('status');
+            status.style.display = "block";
+            status.className = "status-box loading";
+            status.innerText = "දත්ත පරීක්ෂා කරමින්...";
+
+            try {
+                const studentSnap = await getDoc(doc(db, "students", studentId));
+                if (studentSnap.exists()) {
+                    const studentData = studentSnap.data();
+                    const now = new Date();
+                    const dateStr = now.toISOString().split('T')[0];
+                    const timeStr = now.toLocaleTimeString();
+
+                    await addDoc(collection(db, "attendance"), {
+                        studentId: studentId,
+                        studentName: studentData.name,
+                        date: dateStr,
+                        time: timeStr
+                    });
+
+                    status.className = "status-box success";
+                    status.innerText = `✅ ${studentData.name} ගේ පැමිණීම සටහන් කළා!`;
+                    
+                    // තත්පර 3කට පසු නැවත සූදානම් වෙන්න
+                    setTimeout(() => {
+                        status.style.display = "none";
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }, 3000);
+
+                } else {
+                    status.innerText = "❌ වලංගු නොවන ශිෂ්‍යයෙකි.";
+                }
+            } catch (e) {
+                status.innerText = "❌ දෝෂයකි: " + e.message;
+            }
+        }
+
+        // පේජ් එක ලෝඩ් වෙද්දීම URL එකේ ID එකක් තියේද බලනවා
+        window.onload = markAttendance;
+    </script>
+</body>
+</html>
