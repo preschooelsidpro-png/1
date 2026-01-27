@@ -15,7 +15,6 @@
             align-items: center;
         }
 
-        /* Profile Header */
         .profile-card {
             background: white;
             width: 100%;
@@ -42,120 +41,74 @@
             cursor: pointer;
         }
 
-        .profile-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
-        }
-
-        .profile-placeholder {
-            font-size: 50px;
-            color: #adb5bd;
-        }
-
+        .profile-img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .profile-placeholder { font-size: 50px; color: #adb5bd; }
         .student-name { font-size: 22px; font-weight: bold; color: #333; margin: 5px 0; }
         .student-info { color: #666; font-size: 14px; margin-bottom: 15px; }
 
-        /* Attendance Card */
         .attendance-card {
-            width: 90%;
-            max-width: 460px;
+            width: 90%; max-width: 460px;
             background: linear-gradient(135deg, #00b09b, #96c93d);
-            color: white;
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            color: white; padding: 15px; border-radius: 15px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         .attendance-label { font-size: 13px; opacity: 0.9; }
         .attendance-status { font-size: 18px; font-weight: bold; }
 
-        /* Parent Notifications */
         .notification-box {
-            width: 90%;
-            max-width: 460px;
-            background: #fff3cd;
-            border-left: 5px solid #ffc107;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            display: none;
-        }
-        .notification-title { font-weight: bold; color: #856404; margin-bottom: 5px; }
-
-        /* Feed Section */
-        .feed-container {
-            width: 95%;
-            max-width: 500px;
-            padding-bottom: 50px;
+            width: 90%; max-width: 460px;
+            background: #fff3cd; border-left: 5px solid #ffc107;
+            padding: 15px; margin-bottom: 20px; border-radius: 8px; display: none;
         }
 
-        .post-card {
-            background: white;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
+        .feed-container { width: 95%; max-width: 500px; padding-bottom: 50px; }
 
+        /* Post & Gallery Styles */
+        .post-card { background: white; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; }
         .post-content { padding: 15px; }
         .post-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 8px; }
-        .post-body { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 10px; white-space: pre-wrap; }
+        .post-body { font-size: 14px; color: #555; line-height: 1.5; white-space: pre-wrap; }
         
-        .post-media { cursor: pointer; }
-        .post-media img { 
-            width: 100%; 
-            max-height: 400px; 
-            object-fit: cover;
-            display: block; 
-            transition: opacity 0.3s;
+        /* Smooth Gallery Layout */
+        .gallery-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            gap: 10px;
+            padding: 10px;
+            -ms-overflow-style: none; scrollbar-width: none;
         }
-        .post-media img:hover { opacity: 0.9; }
+        .gallery-container::-webkit-scrollbar { display: none; }
+        
+        .gallery-item {
+            flex: 0 0 85%;
+            scroll-snap-align: center;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .gallery-item img { width: 100%; height: 250px; object-fit: cover; display: block; }
 
         .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
 
         .post-date { font-size: 11px; color: #999; padding: 10px 15px; text-align: right; }
 
-        #loading { margin-top: 50px; text-align: center; font-weight: bold; color: #666; }
-
-        /* Smooth Image Overlay / Lightbox */
+        /* Image Overlay */
         .image-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            cursor: zoom-out;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center;
+            z-index: 2000; cursor: zoom-out; opacity: 0; transition: opacity 0.3s ease;
         }
-        .image-overlay.active {
-            display: flex;
-            opacity: 1;
-        }
-        .image-overlay img {
-            max-width: 95%;
-            max-height: 95%;
-            border-radius: 5px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        .image-overlay.active img {
-            transform: scale(1);
-        }
+        .image-overlay.active { display: flex; opacity: 1; }
+        .image-overlay img { max-width: 95%; max-height: 90%; border-radius: 8px; transform: scale(0.9); transition: transform 0.3s ease; }
+        .image-overlay.active img { transform: scale(1); }
     </style>
 </head>
 <body>
 
-    <!-- Image Preview Overlay -->
     <div id="imageOverlay" class="image-overlay" onclick="closeImage()">
         <img id="overlayImg" src="" alt="Full View">
     </div>
@@ -181,17 +134,15 @@
     </div>
 
     <div id="notificationBox" class="notification-box">
-        <div class="notification-title">⚠️ වැදගත් දැනුම්දීමක්</div>
-        <div id="notificationText" style="font-size: 14px; color: #856404;"></div>
+        <div style="font-weight:bold; color:#856404; margin-bottom:5px;">⚠️ වැදගත් පණිවිඩයකි</div>
+        <div id="notificationText" style="font-size:14px; color:#856404;"></div>
     </div>
 
-    <div id="feed" class="feed-container">
-        <div id="loading">දත්ත ලබා ගනිමින්...</div>
-    </div>
+    <div id="feed" class="feed-container"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, getDocs, query, where, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -208,138 +159,104 @@
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
 
-        function fixDropboxUrl(url) {
+        function fixUrl(url) {
             if (!url) return "";
-            if (url.includes("dropbox.com")) {
-                return url.replace("?dl=0", "?raw=1").replace("&dl=0", "&raw=1");
-            }
-            return url;
+            return url.includes("dropbox.com") ? url.replace("?dl=0", "?raw=1").replace("&dl=0", "&raw=1") : url;
         }
 
-        // Shared Image View Function
         window.openImage = (src) => {
-            if (src) {
-                const overlay = document.getElementById('imageOverlay');
-                document.getElementById('overlayImg').src = src;
-                overlay.style.display = 'flex';
-                setTimeout(() => overlay.classList.add('active'), 10);
-                document.body.style.overflow = 'hidden';
-            }
+            const overlay = document.getElementById('imageOverlay');
+            document.getElementById('overlayImg').src = src;
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
         };
 
         window.closeImage = () => {
             const overlay = document.getElementById('imageOverlay');
             overlay.classList.remove('active');
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }, 300);
+            setTimeout(() => { overlay.style.display = 'none'; document.body.style.overflow = 'auto'; }, 300);
         };
 
         if (studentId) {
-            loadStudentData();
-            checkAttendance();
-        } else {
-            document.getElementById('loading').innerHTML = "❌ අවලංගු ID එකක්.";
+            loadStudent();
+            loadAttendance();
         }
 
-        async function loadStudentData() {
-            try {
-                const docSnap = await getDoc(doc(db, "students", studentId));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById('profileSection').style.display = 'block';
-                    document.getElementById('displayName').textContent = data.name;
-                    document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo} | Grade: ${data.grade}-${data.classGroup}`;
-                    
-                    if (data.photoUrl && data.photoUrl.trim() !== "") {
-                        document.getElementById('displayPhoto').src = fixDropboxUrl(data.photoUrl);
-                    }
-
-                    if(data.parentNote) {
-                        document.getElementById('notificationBox').style.display = 'block';
-                        document.getElementById('notificationText').textContent = data.parentNote;
-                    }
-
-                    loadPosts(data.grade, data.classGroup);
+        async function loadStudent() {
+            const snap = await getDoc(doc(db, "students", studentId));
+            if (snap.exists()) {
+                const d = snap.data();
+                document.getElementById('profileSection').style.display = 'block';
+                document.getElementById('displayName').textContent = d.name;
+                document.getElementById('displayDetails').textContent = `ID: ${d.admissionNo} | ශ්‍රේණිය: ${d.grade}`;
+                if(d.photoUrl) document.getElementById('displayPhoto').src = fixUrl(d.photoUrl);
+                if(d.parentNote) {
+                    document.getElementById('notificationBox').style.display = 'block';
+                    document.getElementById('notificationText').textContent = d.parentNote;
                 }
-            } catch (e) { console.error(e); }
+                loadFeed(d.grade, d.classGroup);
+            }
         }
 
-        async function checkAttendance() {
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                const qAttendance = query(collection(db, "attendance"), 
-                    where("studentId", "==", studentId), 
-                    where("date", "==", today));
-                
-                const snap = await getDocs(qAttendance);
-                const attCard = document.getElementById('attendanceCard');
-                attCard.style.display = 'flex';
-
-                if (!snap.empty) {
-                    const attData = snap.docs[0].data();
-                    document.getElementById('attendanceStatus').textContent = "පැමිණ ඇත";
-                    document.getElementById('attendanceTime').textContent = attData.time;
-                    attCard.style.background = "linear-gradient(135deg, #00b09b, #96c93d)";
-                } else {
-                    document.getElementById('attendanceStatus').textContent = "පැමිණ නැත";
-                    document.getElementById('attendanceTime').textContent = "--:--";
-                    attCard.style.background = "linear-gradient(135deg, #ff416c, #ff4b2b)";
-                }
-            } catch (e) { console.error(e); }
+        async function loadAttendance() {
+            const today = new Date().toISOString().split('T')[0];
+            const q = query(collection(db, "attendance"), where("studentId", "==", studentId), where("date", "==", today));
+            const snap = await getDocs(q);
+            document.getElementById('attendanceCard').style.display = 'flex';
+            if (!snap.empty) {
+                const ad = snap.docs[0].data();
+                document.getElementById('attendanceStatus').textContent = "පැමිණ ඇත";
+                document.getElementById('attendanceTime').textContent = ad.time;
+            }
         }
 
-        async function loadPosts(grade, classGroup) {
-            const feedEl = document.getElementById('feed');
-            try {
-                const snap = await getDocs(collection(db, "posts"));
-                const loadingEl = document.getElementById('loading');
-                if(loadingEl) loadingEl.style.display = 'none';
-                feedEl.innerHTML = '';
-                
-                let posts = [];
-                snap.forEach(d => {
-                    const p = d.data();
-                    let show = (p.targetType === 'all') || 
-                               (p.targetType === 'grade' && p.targetValue == grade) ||
-                               (p.targetType === 'class' && p.targetValue == `${grade}-${classGroup}`) ||
-                               (p.targetType === 'individual' && p.targetValue == studentId);
-                    if (show) posts.push(p);
-                });
+        async function loadFeed(grade, classGroup) {
+            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+            const snap = await getDocs(q);
+            const feed = document.getElementById('feed');
+            feed.innerHTML = '';
 
-                posts.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                posts.forEach(p => renderPost(p));
-            } catch (e) { console.error(e); }
+            snap.forEach(doc => {
+                const p = doc.data();
+                let canSee = p.targetType === 'all' || 
+                             (p.targetType === 'grade' && p.targetValue == grade) ||
+                             (p.targetType === 'class' && p.targetValue == `${grade}-${classGroup}`) ||
+                             (p.targetType === 'individual' && p.targetValue == studentId);
+                
+                if(canSee) renderPost(p);
+            });
         }
 
         function renderPost(post) {
-            const feedEl = document.getElementById('feed');
-            const postCard = document.createElement('div');
-            postCard.className = 'post-card';
+            const card = document.createElement('div');
+            card.className = 'post-card';
             
-            let mediaHTML = '';
-            const fixedUrl = fixDropboxUrl(post.imageUrl);
-
+            let mediaHtml = '';
             if (post.videoUrl) {
                 const vid = post.videoUrl.split('v=')[1]?.split('&')[0] || post.videoUrl.split('/').pop();
-                mediaHTML = `<div class="video-container"><iframe src="https://www.youtube.com/embed/${vid}"></iframe></div>`;
-            } else if (post.imageUrl && post.imageUrl.trim() !== "") {
-                mediaHTML = `
-                    <div class="post-media" onclick="openImage('${fixedUrl}')">
-                        <img src="${fixedUrl}" onerror="this.parentElement.style.display='none'">
-                    </div>`;
+                mediaHtml = `<div class="video-container"><iframe src="https://www.youtube.com/embed/${vid}"></iframe></div>`;
+            } else if (post.imageUrls && post.imageUrls.length > 0) {
+                mediaHtml = `<div class="gallery-container">`;
+                post.imageUrls.forEach(url => {
+                    const fUrl = fixUrl(url);
+                    mediaHtml += `<div class="gallery-item" onclick="openImage('${fUrl}')"><img src="${fUrl}"></div>`;
+                });
+                mediaHtml += `</div>`;
+            } else if (post.imageUrl) {
+                const fUrl = fixUrl(post.imageUrl);
+                mediaHtml += `<div style="cursor:pointer" onclick="openImage('${fUrl}')"><img src="${fUrl}" style="width:100%"></div>`;
             }
 
-            postCard.innerHTML = `
+            card.innerHTML = `
                 <div class="post-content">
-                    <div class="post-title">${post.title}</div>
+                    <div class="post-title" style="${post.isAlert ? 'color:#d9534f' : ''}">${post.title}</div>
                     <div class="post-body">${post.body}</div>
                 </div>
-                ${mediaHTML}
-                <div class="post-date">${post.createdAt ? new Date(post.createdAt.seconds*1000).toLocaleString() : ''}</div>
+                ${mediaHtml}
+                <div class="post-date">${post.createdAt ? new Date(post.createdAt.seconds*1000).toLocaleDateString() : ''}</div>
             `;
-            feedEl.appendChild(postCard);
+            document.getElementById('feed').appendChild(card);
         }
     </script>
 </body>
