@@ -184,6 +184,22 @@
             color: #ffc107;
         }
 
+        /* AI Story Modal */
+        .ai-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 3000; display: none;
+            justify-content: center; align-items: center; padding: 20px;
+            box-sizing: border-box;
+        }
+        .ai-modal-content {
+            background: var(--card-bg); width: 100%; max-width: 450px;
+            padding: 25px; border-radius: 25px; position: relative;
+            max-height: 80vh; overflow-y: auto; text-align: left;
+        }
+        .ai-modal-title { color: #d63384; font-size: 20px; font-weight: bold; margin-bottom: 15px; text-align: center; }
+        .ai-story-text { line-height: 1.6; font-size: 15px; color: var(--text-main); white-space: pre-wrap; }
+        .close-ai { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; }
+
         .feed-container { width: 95%; max-width: 500px; padding-bottom: 50px; }
 
         /* Post & Gallery Styles */
@@ -236,6 +252,15 @@
 
     <div id="imageOverlay" class="image-overlay" onclick="closeImage()">
         <img id="overlayImg" src="" alt="Full View">
+    </div>
+
+    <!-- AI Story Modal -->
+    <div id="aiModal" class="ai-modal">
+        <div class="ai-modal-content">
+            <span class="close-ai" onclick="closeAIModal()">✖</span>
+            <div class="ai-modal-title">✨ Cute AI Story Crafter</div>
+            <div id="aiStoryText" class="ai-story-text">කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න. 🪄</div>
+        </div>
     </div>
 
     <div id="profileSection" class="profile-card" style="display:none;">
@@ -293,6 +318,7 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
+        let currentStudentData = null;
 
         const translations = {
             si: {
@@ -374,9 +400,46 @@
             setTimeout(() => { overlay.style.display = 'none'; document.body.style.overflow = 'auto'; }, 300);
         };
 
-        window.handleCuteAI = () => {
-            // Placeholder for AI functionality
-            console.log("Cute AI Clicked - Placeholder for future update");
+        // --- AI Story Crafter Integration ---
+        window.closeAIModal = () => {
+            document.getElementById('aiModal').style.display = 'none';
+        };
+
+        window.handleCuteAI = async () => {
+            if(!currentStudentData) return;
+            
+            const modal = document.getElementById('aiModal');
+            const storyText = document.getElementById('aiStoryText');
+            modal.style.display = 'flex';
+            storyText.textContent = "🪄 කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න.";
+
+            const studentName = currentStudentData.name;
+            const prompt = `Write a very short, cute, and inspiring story in Sinhala for a preschool child named ${studentName}. In this story, ${studentName} is the hero who does a good deed today (like helping a friend or cleaning up). Make it magical and educational. Use a friendly tone.`;
+
+            const apiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs";
+            
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: "You are a friendly preschool teacher who tells magical stories in Sinhala." }] }
+                    })
+                });
+
+                const result = await response.json();
+                const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (aiText) {
+                    storyText.textContent = aiText;
+                } else {
+                    storyText.textContent = "සමාවන්න, කතාව නිර්මාණය කිරීමට නොහැකි විය. නැවත උත්සාහ කරන්න.";
+                }
+            } catch (e) {
+                console.error(e);
+                storyText.textContent = "ජාල දෝෂයකි. කරුණාකර ඔබගේ අන්තර්ජාල සබඳතාව පරීක්ෂා කරන්න.";
+            }
         };
 
         async function loadSettings() {
@@ -400,7 +463,8 @@
         async function loadStudent() {
             const snap = await getDoc(doc(db, "students", studentId));
             if (snap.exists()) {
-                const d = snap.data();
+                currentStudentData = snap.data();
+                const d = currentStudentData;
                 const lang = document.getElementById('langSelector').value;
                 document.getElementById('profileSection').style.display = 'block';
                 document.getElementById('displayName').textContent = d.name;
