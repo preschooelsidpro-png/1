@@ -29,8 +29,8 @@
         }
 
         .profile-img {
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 110px;
             border-radius: 50%;
             object-fit: cover;
             border: 4px solid #28a745;
@@ -41,6 +41,23 @@
         .student-name { font-size: 22px; font-weight: bold; color: #333; margin: 5px 0; }
         .student-info { color: #666; font-size: 14px; margin-bottom: 15px; }
 
+        /* Attendance Card - NEW */
+        .attendance-card {
+            width: 90%;
+            max-width: 460px;
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .attendance-label { font-size: 13px; opacity: 0.9; }
+        .attendance-status { font-size: 18px; font-weight: bold; }
+
         /* Parent Notifications Section */
         .notification-box {
             width: 90%;
@@ -50,16 +67,9 @@
             padding: 15px;
             margin-bottom: 20px;
             border-radius: 8px;
-            display: none; /* Hidden by default */
+            display: none;
         }
-        .notification-title {
-            font-weight: bold;
-            color: #856404;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 5px;
-        }
+        .notification-title { font-weight: bold; color: #856404; margin-bottom: 5px; }
 
         /* Feed Section */
         .feed-container {
@@ -71,7 +81,6 @@
         .post-card {
             background: white;
             border-radius: 15px;
-            padding: 0;
             margin-bottom: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             overflow: hidden;
@@ -81,44 +90,15 @@
         .post-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 8px; }
         .post-body { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 10px; white-space: pre-wrap; }
         
-        .post-media { width: 100%; margin: 0; }
-        .post-media img {
-            width: 100%;
-            display: block;
-            background: #eee;
-        }
+        .post-media img { width: 100%; display: block; }
 
-        /* Fixed Video Container */
-        .video-wrapper {
-            width: 100%;
-            background: #000;
-        }
+        /* Video Container */
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
 
-        .video-container {
-            position: relative;
-            padding-bottom: 56.25%; 
-            height: 0;
-            overflow: hidden;
-        }
+        .post-date { font-size: 11px; color: #999; padding: 10px 15px; text-align: right; }
 
-        .video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
-
-        .post-date {
-            font-size: 11px;
-            color: #999;
-            padding: 10px 15px 15px 15px;
-            text-align: right;
-        }
-
-        #loading { margin-top: 50px; font-weight: bold; color: #666; padding: 20px; text-align: center; }
-        .no-posts { text-align: center; color: #999; margin-top: 20px; }
+        #loading { margin-top: 50px; text-align: center; font-weight: bold; color: #666; }
     </style>
 </head>
 <body>
@@ -129,11 +109,20 @@
         <div id="displayDetails" class="student-info">Admission No: -- | Grade: --</div>
     </div>
 
-    <!-- Parent Notifications Box -->
-    <div id="notificationBox" class="notification-box">
-        <div class="notification-title">
-            ⚠️ වැදගත් දැනුම්දීමක්
+    <!-- Attendance Status Card -->
+    <div id="attendanceCard" class="attendance-card" style="display:none;">
+        <div>
+            <div class="attendance-label">අද දින පැමිණීම</div>
+            <div id="attendanceStatus" class="attendance-status">පැමිණ නැත</div>
         </div>
+        <div style="text-align: right;">
+            <div class="attendance-label">වේලාව</div>
+            <div id="attendanceTime" class="attendance-status">--:--</div>
+        </div>
+    </div>
+
+    <div id="notificationBox" class="notification-box">
+        <div class="notification-title">⚠️ වැදගත් දැනුම්දීමක්</div>
         <div id="notificationText" style="font-size: 14px; color: #856404;"></div>
     </div>
 
@@ -143,7 +132,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -151,170 +140,111 @@
             projectId: "isia-4324b",
             storageBucket: "isia-4324b.firebasestorage.app",
             messagingSenderId: "981887431122",
-            appId: "1:981887431122:web:8e96c34367cb4228ff980b",
-            measurementId: "G-10N2QR8W12"
+            appId: "1:981887431122:web:8e96c34367cb4228ff980b"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const fallbackSVG = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='8' r='5'/%3e%3cpath d='M3 21v-2a7 7 0 0 1 14 0v2'/%3e%3c/svg%3e";
-
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
 
-        if (!studentId) {
-            document.getElementById('loading').innerHTML = "❌ අවලංගු ID එකක්.";
-        } else {
+        if (studentId) {
             loadStudentData();
+            checkAttendance();
+        } else {
+            document.getElementById('loading').innerHTML = "❌ අවලංගු ID එකක්.";
         }
 
         async function loadStudentData() {
             try {
-                const docRef = doc(db, "students", studentId);
-                const docSnap = await getDoc(docRef);
-
+                const docSnap = await getDoc(doc(db, "students", studentId));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     document.getElementById('profileSection').style.display = 'block';
-                    document.getElementById('displayName').textContent = data.name || 'Unknown Student';
-                    document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo || '--'} | Grade: ${data.grade || '--'}-${data.classGroup || '--'}`;
+                    document.getElementById('displayName').textContent = data.name;
+                    document.getElementById('displayDetails').textContent = `Admission: ${data.admissionNo} | Grade: ${data.grade}-${data.classGroup}`;
                     
-                    let studentPhoto = (data.photoUrl || "").trim();
                     const photoImg = document.getElementById('displayPhoto');
-                    
-                    photoImg.onerror = () => { photoImg.src = fallbackSVG; };
+                    photoImg.src = data.photoUrl || "https://via.placeholder.com/150";
 
-                    if (studentPhoto && studentPhoto !== "" && studentPhoto !== "undefined") {
-                        if (studentPhoto.includes('dropbox.com')) {
-                            studentPhoto = studentPhoto.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
-                        }
-                        photoImg.src = studentPhoto;
-                    } else {
-                        photoImg.src = fallbackSVG;
-                    }
-
-                    // Load specific notification if available in student record
                     if(data.parentNote) {
                         document.getElementById('notificationBox').style.display = 'block';
                         document.getElementById('notificationText').textContent = data.parentNote;
                     }
 
-                    loadPostsOnce(data.grade, data.classGroup);
-                } else {
-                    document.getElementById('loading').innerHTML = "❌ ශිෂ්‍යයා සොයාගත නොහැක.";
+                    loadPosts(data.grade, data.classGroup);
                 }
-            } catch (e) {
-                console.error("Firestore Error:", e);
-                document.getElementById('loading').innerHTML = "❌ දෝෂයකි.";
-            }
+            } catch (e) { console.error(e); }
         }
 
-        async function loadPostsOnce(grade, classGroup) {
-            const feedEl = document.getElementById('feed');
-            const classKey = `${grade}-${classGroup}`;
-
+        async function checkAttendance() {
             try {
-                const querySnapshot = await getDocs(collection(db, "posts"));
-                document.getElementById('loading').style.display = 'none';
-                feedEl.innerHTML = ''; 
+                const today = new Date().toISOString().split('T')[0];
+                const qAttendance = query(collection(db, "attendance"), 
+                    where("studentId", "==", studentId), 
+                    where("date", "==", today));
                 
-                let postsArray = [];
-                querySnapshot.forEach((postDoc) => {
-                    const post = postDoc.data();
-                    let isRelevant = false;
-                    
-                    // Check for global notifications (targetType: all)
-                    if (post.targetType === 'all' || post.targetValue === 'global') {
-                        isRelevant = true;
-                        // If it's a high priority post, show it in the notification box too
-                        if(post.isAlert) {
-                            document.getElementById('notificationBox').style.display = 'block';
-                            document.getElementById('notificationText').textContent = post.title + ": " + post.body;
-                        }
-                    }
+                const snap = await getDocs(qAttendance);
+                document.getElementById('attendanceCard').style.display = 'flex';
 
-                    if (post.targetType === 'grade' && String(post.targetValue) === String(grade)) isRelevant = true;
-                    if (post.targetType === 'class' && String(post.targetValue) === String(classKey)) isRelevant = true;
-                    if (post.targetType === 'individual' && post.targetValue === studentId) isRelevant = true;
+                if (!snap.empty) {
+                    const attData = snap.docs[0].data();
+                    document.getElementById('attendanceStatus').textContent = "පැමිණ ඇත";
+                    document.getElementById('attendanceTime').textContent = attData.time;
+                    document.getElementById('attendanceCard').style.background = "linear-gradient(135deg, #00b09b, #96c93d)";
+                } else {
+                    document.getElementById('attendanceStatus').textContent = "පැමිණ නැත";
+                    document.getElementById('attendanceTime').textContent = "--:--";
+                    document.getElementById('attendanceCard').style.background = "linear-gradient(135deg, #ff416c, #ff4b2b)";
+                }
+            } catch (e) { console.error(e); }
+        }
 
-                    if (isRelevant) postsArray.push(post);
+        async function loadPosts(grade, classGroup) {
+            const feedEl = document.getElementById('feed');
+            try {
+                const snap = await getDocs(collection(db, "posts"));
+                document.getElementById('loading').style.display = 'none';
+                feedEl.innerHTML = '';
+                
+                let posts = [];
+                snap.forEach(d => {
+                    const p = d.data();
+                    let show = (p.targetType === 'all') || 
+                               (p.targetType === 'grade' && p.targetValue == grade) ||
+                               (p.targetType === 'class' && p.targetValue == `${grade}-${classGroup}`) ||
+                               (p.targetType === 'individual' && p.targetValue == studentId);
+                    if (show) posts.push(p);
                 });
 
-                postsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-
-                if (postsArray.length > 0) {
-                    postsArray.forEach(post => renderPost(post));
-                } else {
-                    feedEl.innerHTML = '<div class="no-posts">පණිවිඩ කිසිවක් නැත.</div>';
-                }
-            } catch (err) {
-                console.error(err);
-            }
+                posts.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                posts.forEach(p => renderPost(p));
+            } catch (e) { console.error(e); }
         }
 
         function renderPost(post) {
             const feedEl = document.getElementById('feed');
-            const postDate = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : 'Just now';
-            
-            const videoUrl = (post.videoUrl || "").trim();
-            const imageUrl = (post.imageUrl || "").trim();
-
-            let videoHTML = '';
-            if (videoUrl) {
-                const videoId = extractYouTubeId(videoUrl);
-                if (videoId) {
-                    videoHTML = `
-                        <div class="video-wrapper">
-                            <div class="video-container">
-                                <iframe 
-                                    src="https://www.youtube.com/embed/${videoId}?rel=0" 
-                                    title="YouTube video player" 
-                                    frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                    allowfullscreen>
-                                </iframe>
-                            </div>
-                        </div>`;
-                }
-            }
-
-            let imageHTML = '';
-            if (imageUrl) {
-                let finalImgUrl = imageUrl;
-                if (finalImgUrl.includes('dropbox.com')) {
-                    finalImgUrl = finalImgUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
-                }
-                imageHTML = `<div class="post-media"><img src="${finalImgUrl}" onerror="this.parentElement.style.display='none'"></div>`;
-            }
-
             const postCard = document.createElement('div');
             postCard.className = 'post-card';
+            
+            let mediaHTML = '';
+            if (post.videoUrl) {
+                const vid = post.videoUrl.split('v=')[1]?.split('&')[0] || post.videoUrl.split('/').pop();
+                mediaHTML = `<div class="video-container"><iframe src="https://www.youtube.com/embed/${vid}"></iframe></div>`;
+            } else if (post.imageUrl) {
+                mediaHTML = `<div class="post-media"><img src="${post.imageUrl}"></div>`;
+            }
+
             postCard.innerHTML = `
                 <div class="post-content">
-                    <div class="post-title">${post.title || 'Update'}</div>
-                    <div class="post-body">${post.body || ''}</div>
+                    <div class="post-title">${post.title}</div>
+                    <div class="post-body">${post.body}</div>
                 </div>
-                ${imageHTML}
-                ${videoHTML}
-                <div class="post-date">${postDate}</div>
+                ${mediaHTML}
+                <div class="post-date">${post.createdAt ? new Date(post.createdAt.seconds*1000).toLocaleString() : ''}</div>
             `;
             feedEl.appendChild(postCard);
-        }
-
-        function extractYouTubeId(url) {
-            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-            const match = url.match(regExp);
-            
-            if (match && match[7] && match[7].length === 11) {
-                return match[7];
-            } else {
-                const shortsMatch = url.match(/shorts\/([a-zA-Z0-9_-]{11})/);
-                if (shortsMatch) return shortsMatch[1];
-                const liveMatch = url.match(/live\/([a-zA-Z0-9_-]{11})/);
-                if (liveMatch) return liveMatch[1];
-                return null;
-            }
         }
     </script>
 </body>
