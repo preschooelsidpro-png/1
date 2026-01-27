@@ -226,6 +226,24 @@
         .play-btn:disabled { background: #ccc; cursor: not-allowed; }
         .play-btn:hover:not(:disabled) { transform: scale(1.05); background: #c82333; }
 
+        .emotion-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        .emotion-title { font-weight: bold; margin-bottom: 10px; font-size: 15px; text-align: center; }
+        .emotion-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .emotion-btn { 
+            background: var(--bg-color); border: 1px solid var(--border-color); 
+            border-radius: 12px; padding: 10px 5px; cursor: pointer; text-align: center;
+            transition: all 0.2s;
+        }
+        .emotion-btn:hover { border-color: #d63384; transform: translateY(-2px); }
+        .emotion-emoji { font-size: 24px; display: block; margin-bottom: 5px; }
+        .emotion-label { font-size: 11px; color: var(--text-sub); }
+        .emotion-response { background: #f8f9fa; border-radius: 12px; padding: 15px; font-size: 14px; border-left: 4px solid #d63384; margin-top: 10px; display: none; }
+        [data-theme="dark"] .emotion-response { background: #2a2a2a; }
+
         .feed-container { width: 95%; max-width: 500px; padding-bottom: 50px; }
 
         .post-card { background: var(--card-bg); border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); }
@@ -280,13 +298,36 @@
     <div id="aiModal" class="ai-modal">
         <div class="ai-modal-content">
             <span class="close-ai" onclick="closeAIModal()">✖</span>
-            <div class="ai-modal-title">✨ Bedtime Story Crafter</div>
-            <div id="aiStoryText" class="ai-story-text">කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න. 🪄</div>
+            <div class="ai-modal-title">✨ Cute AI - Hello!</div>
             
-            <div id="audioControls" class="audio-controls" style="display: none;">
-                <button id="playAudioBtn" class="play-btn" onclick="playStoryAudio()">
-                    <span>🔊</span> Listen Story
-                </button>
+            <div id="aiStorySection">
+                <div style="font-weight:bold; margin-bottom:5px; font-size:14px; color:#d63384;">🪄 Bedtime Story for You</div>
+                <div id="aiStoryText" class="ai-story-text">කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න.</div>
+                
+                <div id="audioControls" class="audio-controls" style="display: none; margin-bottom: 20px;">
+                    <button id="playAudioBtn" class="play-btn" onclick="playStoryAudio()">
+                        <span>🔊</span> Listen Story
+                    </button>
+                </div>
+            </div>
+
+            <div class="emotion-section">
+                <div class="emotion-title">🌈 How are you feeling today? (හැඟීම් හඳුනාගැනීම)</div>
+                <div class="emotion-grid">
+                    <button class="emotion-btn" onclick="getEmotionGuide('happy')">
+                        <span class="emotion-emoji">😊</span><span class="emotion-label">Happy</span>
+                    </button>
+                    <button class="emotion-btn" onclick="getEmotionGuide('sad')">
+                        <span class="emotion-emoji">😢</span><span class="emotion-label">Sad</span>
+                    </button>
+                    <button class="emotion-btn" onclick="getEmotionGuide('angry')">
+                        <span class="emotion-emoji">😠</span><span class="emotion-label">Angry</span>
+                    </button>
+                    <button class="emotion-btn" onclick="getEmotionGuide('scared')">
+                        <span class="emotion-emoji">😨</span><span class="emotion-label">Scared</span>
+                    </button>
+                </div>
+                <div id="emotionResponse" class="emotion-response"></div>
             </div>
         </div>
     </div>
@@ -348,6 +389,7 @@
         let currentStudentData = null;
         let currentStoryAudio = null;
         let isStoryLoading = false;
+        const geminiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs";
 
         const translations = {
             si: { today_attendance: "අද දින පැමිණීම", not_present: "පැමිණ නැත", present: "පැමිණ ඇත", time: "වේලාව", important_note: "⚠️ වැදගත් පණිවිඩයකි", loading: "පූරණය වෙමින්...", admission_label: "අංකය", grade_label: "ශ්‍රේණිය" },
@@ -415,10 +457,8 @@
             }
         };
 
-        // NEW: Function to just show the modal, assuming background loading is in progress or done
         window.showCuteAIModal = () => {
-            const modal = document.getElementById('aiModal');
-            modal.style.display = 'flex';
+            document.getElementById('aiModal').style.display = 'flex';
         };
 
         async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
@@ -434,21 +474,17 @@
             }
         }
 
-        // Modified handleCuteAI to run in the background without opening modal
         async function preLoadCuteAI() {
             if(!currentStudentData || isStoryLoading) return;
             isStoryLoading = true;
             
             const storyText = document.getElementById('aiStoryText');
             const audioControls = document.getElementById('audioControls');
-            
             const studentName = currentStudentData.name;
             const storyPrompt = `Write a LONG bedtime story (minimum 500 words) in Sinhala for a child named ${studentName}. The story should be about ${studentName} going on a magical adventure. Use simple grammar suitable for a 3-5 year old. Soothing and calm tone. Start with "එකමත් එක රටක ${studentName} කියලා බබෙක් හිටියා...".`;
 
-            const apiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs"; 
-            
             try {
-                const result = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                const result = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -458,11 +494,9 @@
                 });
 
                 const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                
                 if (aiText) {
                     storyText.textContent = aiText;
-                    
-                    const ttsResult = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
+                    const ttsResult = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${geminiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -474,25 +508,40 @@
                             model: "gemini-2.5-flash-preview-tts"
                         })
                     });
-
                     const audioData = ttsResult.candidates?.[0]?.content?.parts?.[0]?.inlineData;
                     if (audioData && audioData.data) {
                         const sampleRate = parseInt(audioData.mimeType?.match(/rate=(\d+)/)?.[1] || "24000");
                         const audioBlob = base64ToWavBlob(audioData.data, sampleRate);
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        currentStoryAudio = new Audio(audioUrl);
+                        currentStoryAudio = new Audio(URL.createObjectURL(audioBlob));
                         audioControls.style.display = 'flex';
                     }
-                } else {
-                    storyText.textContent = "සමාවන්න, කතාව නිර්මාණය කිරීමට නොහැකි විය.";
                 }
-            } catch (e) {
-                console.error("Cute AI Error:", e);
-                storyText.textContent = "සමාවන්න, සේවාදායකයේ දෝෂයක් පවතී.";
-            } finally {
-                isStoryLoading = false;
-            }
+            } catch (e) { console.error("Cute AI Error:", e); } finally { isStoryLoading = false; }
         }
+
+        window.getEmotionGuide = async (emotion) => {
+            const resBox = document.getElementById('emotionResponse');
+            resBox.style.display = 'block';
+            resBox.textContent = "විශේෂ පණිවිඩය සූදානම් කරමින්... ✨";
+            const studentName = currentStudentData?.name || "බබා";
+            
+            const prompt = `The child ${studentName} is feeling ${emotion} right now. Write a short, loving, and encouraging message in Sinhala (2-3 sentences) to make the child feel better and happy. Use very sweet language.`;
+
+            try {
+                const result = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: "You are a kind AI assistant for children. Speak lovingly in Sinhala." }] }
+                    })
+                });
+                const msg = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                resBox.textContent = msg || "සමාවන්න, පණිවිඩය ලබා ගැනීමට නොහැකි විය.";
+            } catch (e) {
+                resBox.textContent = "සමාවන්න, මොහොතකින් නැවත උත්සාහ කරන්න.";
+            }
+        };
 
         function base64ToWavBlob(base64, sampleRate) {
             const binaryString = atob(base64);
@@ -534,8 +583,6 @@
                     document.getElementById('notificationText').textContent = d.parentNote;
                 }
                 loadFeed(d.grade, d.classGroup);
-                
-                // Trigger background loading immediately
                 preLoadCuteAI();
             }
         }
