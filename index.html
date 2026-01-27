@@ -198,7 +198,7 @@
         }
         .ai-modal-title { color: #d63384; font-size: 20px; font-weight: bold; margin-bottom: 15px; text-align: center; }
         .ai-story-text { line-height: 1.6; font-size: 15px; color: var(--text-main); white-space: pre-wrap; }
-        .close-ai { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; }
+        .close-ai { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; color: var(--text-sub); }
 
         .audio-controls {
             display: flex;
@@ -375,14 +375,14 @@
                 grade_label: "Grade"
             },
             ta: {
-                today_attendance: "ඉன்றைய வருகை",
-                not_present: "வரவில்லை",
-                present: "வந்துள்ளார்",
-                time: "நேரம்",
-                important_note: "⚠️ முக்கியமான செய்தி",
-                loading: "ஏற்றப்படுகிறது...",
-                admission_label: "இலக்கம்",
-                grade_label: "வகுப்பு"
+                today_attendance: "ඉන්‍රෛය වරුගෛ",
+                not_present: "වරවිල්ලෛ",
+                present: "වන්‍දුළ්ළාර්",
+                time: "නේරම්",
+                important_note: "⚠️ මුක්කියමාන සේයිදි",
+                loading: "ඒට්ටප්පඩුගිරදු...",
+                admission_label: "ඉලක්කම්",
+                grade_label: "වගුප්පු"
             }
         };
 
@@ -481,7 +481,8 @@
             const studentName = currentStudentData.name;
             const storyPrompt = `Tell a short story (4-5 simple sentences) about a preschool child named ${studentName}. Today ${studentName} did a very good thing, like sharing a toy or saying "Thank you". Use very easy English and simple grammar for a 3-year-old. Make it sound warm and lovely. Only output the story.`;
 
-            const apiKey = ""; // API key is handled by the environment
+            // Updated API Key from user instructions
+            const apiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs"; 
             
             try {
                 // Step 1: Generate Story Text with Retries
