@@ -35,7 +35,7 @@
             border-radius: 50%;
             border: 4px solid #28a745;
             overflow: hidden;
-            background: #eee;
+            background: #e9ecef;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -45,12 +45,19 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            display: none; /* පින්තූරය load වන තෙක් සඟවන්න */
+        }
+
+        /* Default Icon when no image */
+        .profile-placeholder {
+            font-size: 50px;
+            color: #adb5bd;
         }
 
         .student-name { font-size: 22px; font-weight: bold; color: #333; margin: 5px 0; }
         .student-info { color: #666; font-size: 14px; margin-bottom: 15px; }
 
-        /* Attendance Card - NEW */
+        /* Attendance Card */
         .attendance-card {
             width: 90%;
             max-width: 460px;
@@ -67,7 +74,22 @@
         .attendance-label { font-size: 13px; opacity: 0.9; }
         .attendance-status { font-size: 18px; font-weight: bold; }
 
-        /* Parent Notifications Section */
+        /* Teacher Mode Button */
+        .teacher-mode-btn {
+            background: #333;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Parent Notifications */
         .notification-box {
             width: 90%;
             max-width: 460px;
@@ -106,7 +128,6 @@
             display: block; 
         }
 
-        /* Video Container */
         .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
 
@@ -118,14 +139,18 @@
 <body>
 
     <div id="profileSection" class="profile-card" style="display:none;">
-        <div class="profile-img-container">
-            <img id="displayPhoto" src="https://via.placeholder.com/150?text=Profile" alt="Profile" class="profile-img" onerror="this.src='https://via.placeholder.com/150?text=Error'">
+        <div class="profile-img-container" id="imgContainer">
+            <span class="profile-placeholder" id="placeholderIcon">👤</span>
+            <img id="displayPhoto" src="" alt="Profile" class="profile-img" onload="this.style.display='block'; document.getElementById('placeholderIcon').style.display='none';">
         </div>
         <div id="displayName" class="student-name">Loading...</div>
         <div id="displayDetails" class="student-info">Admission No: -- | Grade: --</div>
+        
+        <button id="teacherModeToggle" class="teacher-mode-btn" onclick="toggleTeacherMode()">
+            ⚙️ Teacher Mode: OFF
+        </button>
     </div>
 
-    <!-- Attendance Status Card -->
     <div id="attendanceCard" class="attendance-card" style="display:none;">
         <div>
             <div class="attendance-label">අද දින පැමිණීම</div>
@@ -148,7 +173,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, query, where, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCbOS4FlNNzYqOPjjf6xjjxWueC9gYFcLo",
@@ -165,11 +190,54 @@
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
 
+        window.toggleTeacherMode = () => {
+            const current = localStorage.getItem('teacherMode') === 'true';
+            const newState = !current;
+            localStorage.setItem('teacherMode', newState);
+            updateTeacherUI();
+        };
+
+        function updateTeacherUI() {
+            const btn = document.getElementById('teacherModeToggle');
+            const isTeacher = localStorage.getItem('teacherMode') === 'true';
+            if(btn) {
+                btn.innerHTML = isTeacher ? "⚙️ Teacher Mode: ON" : "⚙️ Teacher Mode: OFF";
+                btn.style.background = isTeacher ? "#28a745" : "#333";
+            }
+        }
+
         if (studentId) {
-            loadStudentData();
-            checkAttendance();
+            handleEntry();
         } else {
             document.getElementById('loading').innerHTML = "❌ අවලංගු ID එකක්.";
+        }
+
+        async function handleEntry() {
+            const isTeacher = localStorage.getItem('teacherMode') === 'true';
+            if (isTeacher) await autoMarkAttendance();
+            loadStudentData();
+            checkAttendance();
+            updateTeacherUI();
+        }
+
+        async function autoMarkAttendance() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const q = query(collection(db, "attendance"), where("studentId", "==", studentId), where("date", "==", today));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    const studentSnap = await getDoc(doc(db, "students", studentId));
+                    if (studentSnap.exists()) {
+                        await addDoc(collection(db, "attendance"), {
+                            studentId: studentId,
+                            studentName: studentSnap.data().name,
+                            date: today,
+                            time: new Date().toLocaleTimeString()
+                        });
+                    }
+                }
+            } catch (e) { console.error(e); }
         }
 
         async function loadStudentData() {
@@ -203,17 +271,18 @@
                     where("date", "==", today));
                 
                 const snap = await getDocs(qAttendance);
-                document.getElementById('attendanceCard').style.display = 'flex';
+                const attCard = document.getElementById('attendanceCard');
+                attCard.style.display = 'flex';
 
                 if (!snap.empty) {
                     const attData = snap.docs[0].data();
                     document.getElementById('attendanceStatus').textContent = "පැමිණ ඇත";
                     document.getElementById('attendanceTime').textContent = attData.time;
-                    document.getElementById('attendanceCard').style.background = "linear-gradient(135deg, #00b09b, #96c93d)";
+                    attCard.style.background = "linear-gradient(135deg, #00b09b, #96c93d)";
                 } else {
                     document.getElementById('attendanceStatus').textContent = "පැමිණ නැත";
                     document.getElementById('attendanceTime').textContent = "--:--";
-                    document.getElementById('attendanceCard').style.background = "linear-gradient(135deg, #ff416c, #ff4b2b)";
+                    attCard.style.background = "linear-gradient(135deg, #ff416c, #ff4b2b)";
                 }
             } catch (e) { console.error(e); }
         }
@@ -222,7 +291,8 @@
             const feedEl = document.getElementById('feed');
             try {
                 const snap = await getDocs(collection(db, "posts"));
-                document.getElementById('loading').style.display = 'none';
+                const loadingEl = document.getElementById('loading');
+                if(loadingEl) loadingEl.style.display = 'none';
                 feedEl.innerHTML = '';
                 
                 let posts = [];
