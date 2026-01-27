@@ -200,6 +200,32 @@
         .ai-story-text { line-height: 1.6; font-size: 15px; color: var(--text-main); white-space: pre-wrap; }
         .close-ai { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; }
 
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .play-btn {
+            background: #d63384;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .play-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .play-btn:hover:not(:disabled) { transform: scale(1.05); background: #c82333; }
+
         .feed-container { width: 95%; max-width: 500px; padding-bottom: 50px; }
 
         /* Post & Gallery Styles */
@@ -260,6 +286,12 @@
             <span class="close-ai" onclick="closeAIModal()">✖</span>
             <div class="ai-modal-title">✨ Cute AI Story Crafter</div>
             <div id="aiStoryText" class="ai-story-text">කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න. 🪄</div>
+            
+            <div id="audioControls" class="audio-controls" style="display: none;">
+                <button id="playAudioBtn" class="play-btn" onclick="playStoryAudio()">
+                    <span>🔊</span> Listen Story
+                </button>
+            </div>
         </div>
     </div>
 
@@ -319,6 +351,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = urlParams.get('id');
         let currentStudentData = null;
+        let currentStoryAudio = null;
 
         const translations = {
             si: {
@@ -403,6 +436,16 @@
         // --- AI Story Crafter Integration ---
         window.closeAIModal = () => {
             document.getElementById('aiModal').style.display = 'none';
+            if (currentStoryAudio) {
+                currentStoryAudio.pause();
+                currentStoryAudio = null;
+            }
+        };
+
+        window.playStoryAudio = () => {
+            if (currentStoryAudio) {
+                currentStoryAudio.play();
+            }
         };
 
         window.handleCuteAI = async () => {
@@ -410,21 +453,26 @@
             
             const modal = document.getElementById('aiModal');
             const storyText = document.getElementById('aiStoryText');
+            const audioControls = document.getElementById('audioControls');
+            
             modal.style.display = 'flex';
             storyText.textContent = "🪄 කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න.";
+            audioControls.style.display = 'none';
+            if (currentStoryAudio) currentStoryAudio.pause();
 
             const studentName = currentStudentData.name;
-            const prompt = `Write a very short, cute, and inspiring story in Sinhala for a preschool child named ${studentName}. In this story, ${studentName} is the hero who does a good deed today (like helping a friend or cleaning up). Make it magical and educational. Use a friendly tone.`;
+            const prompt = `Write a very short, cute, and inspiring story in English for a preschool child named ${studentName}. In this story, ${studentName} is the hero who does a good deed today (like helping a friend or cleaning up). Use very simple grammar and words suitable for a 3-year-old. Make it sound like a magical bedtime story. Return only the story text.`;
 
             const apiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs";
             
             try {
+                // Step 1: Generate Story Text
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { parts: [{ text: "You are a friendly preschool teacher who tells magical stories in Sinhala." }] }
+                        systemInstruction: { parts: [{ text: "You are a friendly preschool teacher who tells magical stories in simple English." }] }
                     })
                 });
 
@@ -433,6 +481,29 @@
                 
                 if (aiText) {
                     storyText.textContent = aiText;
+                    
+                    // Step 2: Generate Speech (TTS)
+                    const ttsResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: `Say in a magical, friendly, storytelling voice: ${aiText}` }] }],
+                            generationConfig: {
+                                responseModalities: ["AUDIO"],
+                                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } }
+                            }
+                        })
+                    });
+
+                    const ttsResult = await ttsResponse.json();
+                    const audioBase64 = ttsResult.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+                    if (audioBase64) {
+                        const audioBlob = base64ToWavBlob(audioBase64, 24000);
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        currentStoryAudio = new Audio(audioUrl);
+                        audioControls.style.display = 'flex';
+                    }
                 } else {
                     storyText.textContent = "සමාවන්න, කතාව නිර්මාණය කිරීමට නොහැකි විය. නැවත උත්සාහ කරන්න.";
                 }
@@ -441,6 +512,35 @@
                 storyText.textContent = "ජාල දෝෂයකි. කරුණාකර ඔබගේ අන්තර්ජාල සබඳතාව පරීක්ෂා කරන්න.";
             }
         };
+
+        // Helper to convert PCM to WAV
+        function base64ToWavBlob(base64, sampleRate) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+            
+            const wavHeader = new ArrayBuffer(44);
+            const view = new DataView(wavHeader);
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+            };
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + bytes.length, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, bytes.length, true);
+
+            return new Blob([wavHeader, bytes], { type: 'audio/wav' });
+        }
 
         async function loadSettings() {
             try {
