@@ -282,137 +282,116 @@
         .image-overlay img { max-width: 95%; max-height: 90%; border-radius: 8px; transform: scale(0.9); transition: transform 0.3s ease; }
         .image-overlay.active img { transform: scale(1); }
 
-        /* Add to Home Screen Popup Styles */
-        .install-popup {
+        /* Add to Home Screen Button Styles */
+        .install-btn-fixed {
             position: fixed;
-            bottom: -300px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            background: var(--card-bg);
-            border-radius: 20px 20px 0 0;
-            box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3);
-            z-index: 5000;
-            transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            padding: 25px 20px 20px;
-            border-top: 4px solid var(--accent-color);
-        }
-
-        .install-popup.show {
-            bottom: 0;
-        }
-
-        .install-popup-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .install-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 15px;
-            background: linear-gradient(135deg, #FF6B6B, #4facfe);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .install-text h3 {
-            margin: 0 0 5px 0;
-            font-size: 18px;
-            color: var(--text-main);
-            font-weight: bold;
-        }
-
-        .install-text p {
-            margin: 0;
-            font-size: 13px;
-            color: var(--text-sub);
-        }
-
-        .install-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .install-btn {
-            flex: 1;
-            padding: 12px;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--accent-color), #1e7e34);
+            color: white;
             border: none;
-            border-radius: 12px;
+            padding: 14px 20px;
+            border-radius: 50px;
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
-            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
         }
 
-        .install-btn.primary {
-            background: linear-gradient(135deg, var(--accent-color), #1e7e34);
-            color: white;
+        .install-btn-fixed:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(40, 167, 69, 0.6);
         }
 
-        .install-btn.primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        .install-btn-fixed:active {
+            transform: translateY(-1px);
         }
 
-        .install-btn.secondary {
-            background: var(--bg-color);
-            color: var(--text-sub);
-            border: 1px solid var(--border-color);
-        }
-
-        .install-btn.secondary:hover {
-            background: var(--border-color);
-        }
-
-        .install-steps {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px dashed var(--border-color);
+        /* Instruction Modal */
+        .instruction-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 5000;
             display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        .install-steps.show {
-            display: block;
+        .instruction-modal.show {
+            display: flex;
         }
 
-        .install-step {
+        .instruction-content {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 400px;
+            padding: 25px;
+            border-radius: 20px;
+            position: relative;
+            text-align: left;
+        }
+
+        .instruction-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .instruction-step {
             display: flex;
             align-items: flex-start;
             gap: 12px;
-            margin-bottom: 12px;
-            font-size: 13px;
+            margin-bottom: 15px;
+            font-size: 14px;
             color: var(--text-main);
         }
 
         .step-number {
             background: var(--accent-color);
             color: white;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 14px;
             flex-shrink: 0;
         }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+        .close-instruction {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            font-size: 14px;
         }
 
-        .install-icon {
-            animation: bounce 2s infinite;
+        .close-instruction:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -429,36 +408,34 @@
         </button>
     </div>
 
-    <!-- Add to Home Screen Popup -->
-    <div id="installPopup" class="install-popup">
-        <div class="install-popup-header">
-            <div class="install-icon">📱</div>
-            <div class="install-text">
-                <h3 id="installTitle">Add to Home Screen</h3>
-                <p id="installSubtitle">Quick access to ISIA</p>
+    <!-- Add to Home Screen Button -->
+    <button id="installBtn" class="install-btn-fixed" onclick="handleInstallClick()">
+        <span>📱</span>
+        <span id="installBtnText">Add to Home</span>
+    </button>
+
+    <!-- Instruction Modal (for iOS/Safari) -->
+    <div id="instructionModal" class="instruction-modal" onclick="closeInstructionModal(event)">
+        <div class="instruction-content" onclick="event.stopPropagation()">
+            <div class="instruction-title">
+                <span>📱</span>
+                <span id="instructionTitle">Home Screen එකට Add කරන්න</span>
             </div>
-        </div>
-        <div class="install-actions">
-            <button class="install-btn primary" id="installButton" onclick="handleInstall()">
-                <span id="installBtnText">Add කරන්න</span>
-            </button>
-            <button class="install-btn secondary" onclick="closeInstallPopup()">
-                <span id="laterBtnText">පසුව</span>
-            </button>
-        </div>
-        <div id="installSteps" class="install-steps">
-            <div class="install-step">
+            <div class="instruction-step">
                 <div class="step-number">1</div>
-                <div id="step1Text">Tap the Share button (Safari) or Menu (Chrome)</div>
+                <div id="step1Text">Share බොත්තම (⬆️) හෝ Menu (⋮) ටැප් කරන්න</div>
             </div>
-            <div class="install-step">
+            <div class="instruction-step">
                 <div class="step-number">2</div>
-                <div id="step2Text">Select "Add to Home Screen"</div>
+                <div id="step2Text">"Add to Home Screen" තෝරන්න</div>
             </div>
-            <div class="install-step">
+            <div class="instruction-step">
                 <div class="step-number">3</div>
-                <div id="step3Text">Tap "Add" to install</div>
+                <div id="step3Text">"Add" ටැප් කරන්න</div>
             </div>
+            <button class="close-instruction" onclick="closeInstructionModal()">
+                <span id="closeInstructionText">හරි, තේරුණා</span>
+            </button>
         </div>
     </div>
 
@@ -562,37 +539,33 @@
         let isStoryLoading = false;
         const geminiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs";
 
-        // Install Popup functionality
+        // Install Button functionality
         let deferredPrompt;
-        let installPopupShown = false;
 
         const installTranslations = {
             si: {
-                title: "Home Screen එකට එක් කරන්න",
-                subtitle: "ISIA වෙත ඉක්මන් ප්‍රවේශය",
-                installBtn: "Add කරන්න",
-                laterBtn: "පසුව",
-                step1: "Share බොත්තම (Safari) හෝ Menu (Chrome) ටැප් කරන්න",
+                btnText: "Add to Home",
+                title: "Home Screen එකට Add කරන්න",
+                step1: "Share බොත්තම (⬆️) හෝ Menu (⋮) ටැප් කරන්න",
                 step2: '"Add to Home Screen" තෝරන්න',
-                step3: '"Add" ටැප් කරන්න'
+                step3: '"Add" ටැප් කරන්න',
+                closeBtn: "හරි, තේරුණා"
             },
             en: {
+                btnText: "Add to Home",
                 title: "Add to Home Screen",
-                subtitle: "Quick access to ISIA",
-                installBtn: "Add Now",
-                laterBtn: "Later",
-                step1: "Tap the Share button (Safari) or Menu (Chrome)",
+                step1: "Tap the Share button (⬆️) or Menu (⋮)",
                 step2: 'Select "Add to Home Screen"',
-                step3: 'Tap "Add"'
+                step3: 'Tap "Add"',
+                closeBtn: "Got it"
             },
             ta: {
+                btnText: "Add to Home",
                 title: "Home Screen இல் சேர்க்கவும்",
-                subtitle: "ISIA க்கு விரைவு அணுகல்",
-                installBtn: "இப்போது சேர்க்கவும்",
-                laterBtn: "பின்னர்",
-                step1: "Share பொத்தான் (Safari) அல்லது Menu (Chrome) தட்டவும்",
+                step1: "Share பொத்தான் (⬆️) அல்லது Menu (⋮) தட்டவும்",
                 step2: '"Add to Home Screen" தேர்ந்தெடுக்கவும்',
-                step3: '"Add" தட்டவும்'
+                step3: '"Add" தட்டவும்',
+                closeBtn: "சரி"
             }
         };
 
@@ -600,53 +573,37 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            showInstallPopup();
         });
 
-        function showInstallPopup() {
-            // Always show popup every time page loads
-            setTimeout(() => {
-                const popup = document.getElementById('installPopup');
-                popup.classList.add('show');
-                installPopupShown = true;
-            }, 3000);
-        }
-
-        window.handleInstall = async () => {
-            const installButton = document.getElementById('installButton');
-            const stepsDiv = document.getElementById('installSteps');
-
+        window.handleInstallClick = async () => {
             if (deferredPrompt) {
-                // Chrome/Android - Trigger native install prompt
+                // Chrome/Android - Trigger native install prompt automatically
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 
                 if (outcome === 'accepted') {
-                    closeInstallPopup();
+                    console.log('Added to home screen');
                 }
                 deferredPrompt = null;
             } else {
-                // iOS/Safari or browsers that don't support PWA - Show instructions
-                installButton.style.display = 'none';
-                stepsDiv.classList.add('show');
+                // iOS/Safari - Show instructions
+                document.getElementById('instructionModal').classList.add('show');
             }
         };
 
-        window.closeInstallPopup = () => {
-            const popup = document.getElementById('installPopup');
-            popup.classList.remove('show');
-            // Don't save to localStorage - popup will show again next time
+        window.closeInstructionModal = (event) => {
+            if (event) event.stopPropagation();
+            document.getElementById('instructionModal').classList.remove('show');
         };
 
-        function updateInstallPopupLanguage(lang) {
+        function updateInstallButtonLanguage(lang) {
             const trans = installTranslations[lang];
-            document.getElementById('installTitle').textContent = trans.title;
-            document.getElementById('installSubtitle').textContent = trans.subtitle;
-            document.getElementById('installBtnText').textContent = trans.installBtn;
-            document.getElementById('laterBtnText').textContent = trans.laterBtn;
+            document.getElementById('installBtnText').textContent = trans.btnText;
+            document.getElementById('instructionTitle').textContent = trans.title;
             document.getElementById('step1Text').textContent = trans.step1;
             document.getElementById('step2Text').textContent = trans.step2;
             document.getElementById('step3Text').textContent = trans.step3;
+            document.getElementById('closeInstructionText').textContent = trans.closeBtn;
         }
 
         const translations = {
@@ -680,7 +637,7 @@
             } else {
                 statusEl.textContent = translations[lang].not_present;
             }
-            updateInstallPopupLanguage(lang);
+            updateInstallButtonLanguage(lang);
         };
 
         function fixUrl(url) {
@@ -909,11 +866,8 @@
             loadSettings();
         }
 
-        // Initialize install popup language
-        updateInstallPopupLanguage('si');
-        
-        // Show popup for first-time visitors
-        showInstallPopup();
+        // Initialize button language
+        updateInstallButtonLanguage('si');
     </script>
 </body>
 </html>
