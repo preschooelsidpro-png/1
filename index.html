@@ -312,6 +312,20 @@
             transform: translateY(-1px);
         }
 
+        /* Hide button on desktop/PC screens */
+        @media (min-width: 768px) {
+            .install-btn-fixed {
+                display: none;
+            }
+        }
+
+        /* Hide button on desktop/PC screens */
+        @media (min-width: 769px) {
+            .install-btn-fixed {
+                display: none !important;
+            }
+        }
+
         /* Instruction Modal */
         .instruction-modal {
             position: fixed;
@@ -414,25 +428,48 @@
         <span id="installBtnText">Add to Home</span>
     </button>
 
-    <!-- Instruction Modal (for iOS/Safari) -->
+    <!-- Instruction Modal (for iOS/Safari and Desktop) -->
     <div id="instructionModal" class="instruction-modal" onclick="closeInstructionModal(event)">
         <div class="instruction-content" onclick="event.stopPropagation()">
             <div class="instruction-title">
                 <span>📱</span>
                 <span id="instructionTitle">Home Screen එකට Add කරන්න</span>
             </div>
-            <div class="instruction-step">
-                <div class="step-number">1</div>
-                <div id="step1Text">Share බොත්තම (⬆️) හෝ Menu (⋮) ටැප් කරන්න</div>
+            
+            <!-- Mobile Instructions -->
+            <div id="mobileInstructions">
+                <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-sub); font-size: 13px;">📱 Mobile:</div>
+                <div class="instruction-step">
+                    <div class="step-number">1</div>
+                    <div id="mobileStep1Text">Share බොත්තම (⬆️) හෝ Menu (⋮) ටැප් කරන්න</div>
+                </div>
+                <div class="instruction-step">
+                    <div class="step-number">2</div>
+                    <div id="mobileStep2Text">"Add to Home Screen" තෝරන්න</div>
+                </div>
+                <div class="instruction-step">
+                    <div class="step-number">3</div>
+                    <div id="mobileStep3Text">"Add" ටැප් කරන්න</div>
+                </div>
             </div>
-            <div class="instruction-step">
-                <div class="step-number">2</div>
-                <div id="step2Text">"Add to Home Screen" තෝරන්න</div>
+
+            <!-- Desktop Instructions -->
+            <div id="desktopInstructions" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
+                <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-sub); font-size: 13px;">💻 Desktop:</div>
+                <div class="instruction-step">
+                    <div class="step-number">1</div>
+                    <div id="desktopStep1Text">Browser address bar එකේ Install icon (⊕) click කරන්න</div>
+                </div>
+                <div class="instruction-step">
+                    <div class="step-number">2</div>
+                    <div id="desktopStep2Text">"Install" button එක click කරන්න</div>
+                </div>
+                <div class="instruction-step">
+                    <div class="step-number">3</div>
+                    <div id="desktopStep3Text">Desktop එකේ shortcut එකක් add වෙනවා</div>
+                </div>
             </div>
-            <div class="instruction-step">
-                <div class="step-number">3</div>
-                <div id="step3Text">"Add" ටැප් කරන්න</div>
-            </div>
+
             <button class="close-instruction" onclick="closeInstructionModal()">
                 <span id="closeInstructionText">හරි, තේරුණා</span>
             </button>
@@ -546,25 +583,34 @@
             si: {
                 btnText: "Add to Home",
                 title: "Home Screen එකට Add කරන්න",
-                step1: "Share බොත්තම (⬆️) හෝ Menu (⋮) ටැප් කරන්න",
-                step2: '"Add to Home Screen" තෝරන්න',
-                step3: '"Add" ටැප් කරන්න',
+                mobileStep1: "Share බොත්තම (⬆️) හෝ Menu (⋮) ටැප් කරන්න",
+                mobileStep2: '"Add to Home Screen" තෝරන්න',
+                mobileStep3: '"Add" ටැප් කරන්න',
+                desktopStep1: 'Browser address bar එකේ Install icon (⊕) click කරන්න',
+                desktopStep2: '"Install" button එක click කරන්න',
+                desktopStep3: 'Desktop එකේ shortcut එකක් add වෙනවා',
                 closeBtn: "හරි, තේරුණා"
             },
             en: {
                 btnText: "Add to Home",
-                title: "Add to Home Screen",
-                step1: "Tap the Share button (⬆️) or Menu (⋮)",
-                step2: 'Select "Add to Home Screen"',
-                step3: 'Tap "Add"',
+                title: "Add to Home Screen / Desktop",
+                mobileStep1: "Tap the Share button (⬆️) or Menu (⋮)",
+                mobileStep2: 'Select "Add to Home Screen"',
+                mobileStep3: 'Tap "Add"',
+                desktopStep1: 'Click the Install icon (⊕) in browser address bar',
+                desktopStep2: 'Click "Install" button',
+                desktopStep3: 'Shortcut will be added to Desktop',
                 closeBtn: "Got it"
             },
             ta: {
                 btnText: "Add to Home",
-                title: "Home Screen இல் சேர்க்கவும்",
-                step1: "Share பொத்தான் (⬆️) அல்லது Menu (⋮) தட்டவும்",
-                step2: '"Add to Home Screen" தேர்ந்தெடுக்கவும்',
-                step3: '"Add" தட்டவும்',
+                title: "Home Screen / Desktop இல் சேர்க்கவும்",
+                mobileStep1: "Share பொத்தான் (⬆️) அல்லது Menu (⋮) தட்டவும்",
+                mobileStep2: '"Add to Home Screen" தேர்ந்தெடுக்கவும்',
+                mobileStep3: '"Add" தட்டவும்',
+                desktopStep1: 'Browser address bar இல் Install icon (⊕) கிளிக் செய்யவும்',
+                desktopStep2: '"Install" பொத்தானைக் கிளிக் செய்யவும்',
+                desktopStep3: 'Desktop இல் shortcut சேர்க்கப்படும்',
                 closeBtn: "சரி"
             }
         };
@@ -600,9 +646,12 @@
             const trans = installTranslations[lang];
             document.getElementById('installBtnText').textContent = trans.btnText;
             document.getElementById('instructionTitle').textContent = trans.title;
-            document.getElementById('step1Text').textContent = trans.step1;
-            document.getElementById('step2Text').textContent = trans.step2;
-            document.getElementById('step3Text').textContent = trans.step3;
+            document.getElementById('mobileStep1Text').textContent = trans.mobileStep1;
+            document.getElementById('mobileStep2Text').textContent = trans.mobileStep2;
+            document.getElementById('mobileStep3Text').textContent = trans.mobileStep3;
+            document.getElementById('desktopStep1Text').textContent = trans.desktopStep1;
+            document.getElementById('desktopStep2Text').textContent = trans.desktopStep2;
+            document.getElementById('desktopStep3Text').textContent = trans.desktopStep3;
             document.getElementById('closeInstructionText').textContent = trans.closeBtn;
         }
 
