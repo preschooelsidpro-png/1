@@ -137,7 +137,7 @@
             width: 90%;
             max-width: 460px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 15px;
             margin-bottom: 15px;
         }
@@ -166,6 +166,7 @@
 
         .cute-btn.tv { background: var(--cute-tv-grad); }
         .cute-btn.ai { background: var(--cute-ai-grad); }
+        .cute-btn.games { background: linear-gradient(135deg, #FF6B9D, #C44569); }
 
         .attendance-card {
             width: 90%; max-width: 460px;
@@ -887,6 +888,9 @@
         <button class="cute-btn ai" onclick="showCuteAIModal()">
             <span>🤖</span> Cute AI
         </button>
+        <a href="https://preschooelsidpro-png.github.io/1/games.html" target="_blank" class="cute-btn games">
+            <span>🎮</span> Games
+        </a>
     </div>
 
     <div id="attendanceCard" class="attendance-card" style="display:none;">
@@ -1277,7 +1281,11 @@
 
         window.playStoryAudio = () => {
             if (currentStoryAudio) {
-                currentStoryAudio.play().catch(e => console.error("Playback failed", e));
+                if (currentStoryAudio.paused) {
+                    currentStoryAudio.play().catch(e => console.error("Playback failed", e));
+                } else {
+                    currentStoryAudio.pause();
+                }
             }
         };
 
@@ -1378,7 +1386,26 @@ ${studentName} නිවසට ආවා සතුටින්. හොඳ කෙ
                     const sampleRate = parseInt(audioData.mimeType?.match(/rate=(\d+)/)?.[1] || "24000");
                     const audioBlob = base64ToWavBlob(audioData.data, sampleRate);
                     currentStoryAudio = new Audio(URL.createObjectURL(audioBlob));
+                    
+                    // Auto-play audio when loaded
+                    currentStoryAudio.play().catch(e => {
+                        console.log("Auto-play blocked, user needs to click play button");
+                    });
+                    
                     audioControls.style.display = 'flex';
+                    
+                    // Update button text when playing/paused
+                    currentStoryAudio.addEventListener('play', () => {
+                        document.getElementById('playAudioBtn').innerHTML = '<span>⏸️</span> Pause Story';
+                    });
+                    
+                    currentStoryAudio.addEventListener('pause', () => {
+                        document.getElementById('playAudioBtn').innerHTML = '<span>🔊</span> Listen Story';
+                    });
+                    
+                    currentStoryAudio.addEventListener('ended', () => {
+                        document.getElementById('playAudioBtn').innerHTML = '<span>🔊</span> Listen Story';
+                    });
                 }
             } catch (e) {
                 console.error("Audio generation error:", e);
