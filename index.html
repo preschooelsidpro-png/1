@@ -439,11 +439,14 @@
             </div>
         </div>
         <div class="install-actions">
-            <button class="install-btn secondary" onclick="closeInstallPopup()" style="width: 100%;">
-                <span id="laterBtnText">හරි, තේරුණා</span>
+            <button class="install-btn primary" id="installButton" onclick="handleInstall()">
+                <span id="installBtnText">Add කරන්න</span>
+            </button>
+            <button class="install-btn secondary" onclick="closeInstallPopup()">
+                <span id="laterBtnText">පසුව</span>
             </button>
         </div>
-        <div id="installSteps" class="install-steps show">
+        <div id="installSteps" class="install-steps">
             <div class="install-step">
                 <div class="step-number">1</div>
                 <div id="step1Text">Tap the Share button (Safari) or Menu (Chrome)</div>
@@ -560,13 +563,15 @@
         const geminiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs";
 
         // Install Popup functionality
+        let deferredPrompt;
         let installPopupShown = false;
 
         const installTranslations = {
             si: {
                 title: "Home Screen එකට එක් කරන්න",
                 subtitle: "ISIA වෙත ඉක්මන් ප්‍රවේශය",
-                laterBtn: "හරි, තේරුණා",
+                installBtn: "Add කරන්න",
+                laterBtn: "පසුව",
                 step1: "Share බොත්තම (Safari) හෝ Menu (Chrome) ටැප් කරන්න",
                 step2: '"Add to Home Screen" තෝරන්න',
                 step3: '"Add" ටැප් කරන්න'
@@ -574,7 +579,8 @@
             en: {
                 title: "Add to Home Screen",
                 subtitle: "Quick access to ISIA",
-                laterBtn: "Got it",
+                installBtn: "Add Now",
+                laterBtn: "Later",
                 step1: "Tap the Share button (Safari) or Menu (Chrome)",
                 step2: 'Select "Add to Home Screen"',
                 step3: 'Tap "Add"'
@@ -582,12 +588,20 @@
             ta: {
                 title: "Home Screen இல் சேர்க்கவும்",
                 subtitle: "ISIA க்கு விரைவு அணுகல்",
-                laterBtn: "சரி",
+                installBtn: "இப்போது சேர்க்கவும்",
+                laterBtn: "பின்னர்",
                 step1: "Share பொத்தான் (Safari) அல்லது Menu (Chrome) தட்டவும்",
                 step2: '"Add to Home Screen" தேர்ந்தெடுக்கவும்',
                 step3: '"Add" தட்டவும்'
             }
         };
+
+        // Listen for the browser's install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallPopup();
+        });
 
         function showInstallPopup() {
             const hasSeenPopup = localStorage.getItem('installPopupShown');
@@ -595,18 +609,30 @@
             if (!hasSeenPopup && !installPopupShown) {
                 setTimeout(() => {
                     const popup = document.getElementById('installPopup');
-                    const stepsDiv = document.getElementById('installSteps');
-                    stepsDiv.classList.add('show');
                     popup.classList.add('show');
                     installPopupShown = true;
-                }, 3000); // Show after 3 seconds
+                }, 3000);
             }
         }
 
-        window.handleInstall = () => {
-            // Just show the steps, no actual install
+        window.handleInstall = async () => {
+            const installButton = document.getElementById('installButton');
             const stepsDiv = document.getElementById('installSteps');
-            stepsDiv.classList.add('show');
+
+            if (deferredPrompt) {
+                // Chrome/Android - Trigger native install prompt
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    closeInstallPopup();
+                }
+                deferredPrompt = null;
+            } else {
+                // iOS/Safari or browsers that don't support PWA - Show instructions
+                installButton.style.display = 'none';
+                stepsDiv.classList.add('show');
+            }
         };
 
         window.closeInstallPopup = () => {
@@ -619,6 +645,7 @@
             const trans = installTranslations[lang];
             document.getElementById('installTitle').textContent = trans.title;
             document.getElementById('installSubtitle').textContent = trans.subtitle;
+            document.getElementById('installBtnText').textContent = trans.installBtn;
             document.getElementById('laterBtnText').textContent = trans.laterBtn;
             document.getElementById('step1Text').textContent = trans.step1;
             document.getElementById('step2Text').textContent = trans.step2;
