@@ -1138,7 +1138,7 @@
             }
         }
 
-        // ========== ORIGINAL FUNCTIONS ==========
+        // ========== CUTE AI - FAST STORY GENERATION ==========
         let deferredPrompt;
 
         const installTranslations = {
@@ -1283,21 +1283,13 @@
 
         window.showCuteAIModal = () => {
             document.getElementById('aiModal').style.display = 'flex';
+            // Generate story when modal opens if not already generated
+            if (document.getElementById('aiStoryText').textContent === 'කතාව නිර්මාණය කරමින් පවතිී... කරුණාකර රැඳී සිටින්න.') {
+                preLoadCuteAI();
+            }
         };
 
-        async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (response.ok) return await response.json();
-                } catch (err) {
-                    if (i === retries - 1) throw err;
-                }
-                await new Promise(resolve => setTimeout(resolve, backoff));
-                backoff *= 2;
-            }
-        }
-
+        // FIXED: FAST STORY GENERATION
         async function preLoadCuteAI() {
             if(!currentStudentData || isStoryLoading) return;
             isStoryLoading = true;
@@ -1305,42 +1297,93 @@
             const storyText = document.getElementById('aiStoryText');
             const audioControls = document.getElementById('audioControls');
             const studentName = currentStudentData.name;
-            const storyPrompt = `Write a LONG bedtime story (minimum 500 words) in Sinhala for a child named ${studentName}. The story should be about ${studentName} going on a magical adventure. Use simple grammar suitable for a 3-5 year old. Soothing and calm tone. Start with "එකමත් එක රටක ${studentName} කියලා බබෙක් හිටියා...".`;
+            
+            // Shorter story for faster generation (200-300 words)
+            const storyPrompt = `Write a SHORT bedtime story (200-300 words) in Sinhala for ${studentName}. Simple magical adventure. Use very simple Sinhala words for age 3-5. Start with "එක දවසක ${studentName} නම් බබා...".`;
 
             try {
-                const result = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiKey}`, {
+                storyText.textContent = "කතාව නිර්මාණය කරමින්... ⏳";
+                
+                // Direct fetch without retry for speed - Using faster Gemini model
+                const result = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: storyPrompt }] }],
-                        systemInstruction: { parts: [{ text: "You are a children's storyteller. Write long, simple bedtime stories in Sinhala." }] }
+                        generationConfig: {
+                            temperature: 0.9,
+                            maxOutputTokens: 500
+                        }
                     })
                 });
 
-                const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!result.ok) throw new Error('Story generation failed');
+                
+                const data = await result.json();
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                
                 if (aiText) {
                     storyText.textContent = aiText;
-                    const ttsResult = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${geminiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: `Say in a magical, soothing storytelling voice: ${aiText.substring(0, 1000)}` }] }],
-                            generationConfig: {
-                                responseModalities: ["AUDIO"],
-                                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } }
-                            },
-                            model: "gemini-2.5-flash-preview-tts"
-                        })
-                    });
-                    const audioData = ttsResult.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-                    if (audioData && audioData.data) {
-                        const sampleRate = parseInt(audioData.mimeType?.match(/rate=(\d+)/)?.[1] || "24000");
-                        const audioBlob = base64ToWavBlob(audioData.data, sampleRate);
-                        currentStoryAudio = new Audio(URL.createObjectURL(audioBlob));
-                        audioControls.style.display = 'flex';
-                    }
+                    
+                    // Load audio in background (non-blocking)
+                    loadStoryAudio(aiText, audioControls);
+                } else {
+                    throw new Error('No story content');
                 }
-            } catch (e) { console.error("Cute AI Error:", e); } finally { isStoryLoading = false; }
+            } catch (e) {
+                console.error("Cute AI Error:", e);
+                // Fallback story if API fails
+                storyText.textContent = `${studentName} නම් දරුවා ඉතාමත් දක්ෂ සහ හොඳ දරුවෙක්. හැමදාම ඉගෙන ගන්න කැමති අපේ ස්පෙශල් ${studentName}. 
+
+එක දවසක ${studentName} විශාල වනාන්තරයකට ගියා. එතැන සුරංගනාවන් හා සතුන් හිටියා. ${studentName}ට මායාකාරි මල් වතුරක් හම්බුණා. ඒ මල් වලට සතුන් එක්ක කතා කරන්න පුළුවන්!
+
+පුංචි හාවෙක් කිව්වා, "අපිට උදව් කරන්න!" ${studentName} හැමෝටම උදව් කළා. රජතුමා ${studentName}ට රන් තරුවක් දුන්නා.
+
+${studentName} නිවසට ආවා සතුටින්. හොඳ කෙනෙක් වෙන එක ගොඩක් වැදගත් කියලා ${studentName}ට තේරුණා. ✨
+
+රාත්‍රී නින්ද හොඳින් ගන්න පුතා! 💖`;
+            } finally { 
+                isStoryLoading = false; 
+            }
+        }
+        
+        // Separate function to load audio (non-blocking)
+        async function loadStoryAudio(storyText, audioControls) {
+            try {
+                // Only first 300 chars for faster audio generation
+                const shortText = storyText.substring(0, 300);
+                
+                const ttsResult = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: shortText }] }],
+                        generationConfig: {
+                            responseModalities: ["AUDIO"],
+                            speechConfig: { 
+                                voiceConfig: { 
+                                    prebuiltVoiceConfig: { voiceName: "Aoede" } 
+                                } 
+                            }
+                        }
+                    })
+                });
+                
+                if (!ttsResult.ok) throw new Error('TTS failed');
+                
+                const data = await ttsResult.json();
+                const audioData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+                
+                if (audioData && audioData.data) {
+                    const sampleRate = parseInt(audioData.mimeType?.match(/rate=(\d+)/)?.[1] || "24000");
+                    const audioBlob = base64ToWavBlob(audioData.data, sampleRate);
+                    currentStoryAudio = new Audio(URL.createObjectURL(audioBlob));
+                    audioControls.style.display = 'flex';
+                }
+            } catch (e) {
+                console.error("Audio generation error:", e);
+                // Audio fails silently - story still works
+            }
         }
 
         window.getEmotionGuide = async (emotion) => {
@@ -1352,18 +1395,25 @@
             const prompt = `The child ${studentName} is feeling ${emotion} right now. Write a short, loving, and encouraging message in Sinhala (2-3 sentences) to make the child feel better and happy. Use very sweet language.`;
 
             try {
-                const result = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiKey}`, {
+                const result = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { parts: [{ text: "You are a kind AI assistant for children. Speak lovingly in Sinhala." }] }
+                        generationConfig: {
+                            temperature: 0.9,
+                            maxOutputTokens: 150
+                        }
                     })
                 });
-                const msg = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (!result.ok) throw new Error('Emotion guide failed');
+                
+                const data = await result.json();
+                const msg = data.candidates?.[0]?.content?.parts?.[0]?.text;
                 resBox.textContent = msg || "සමාවන්න, පණිවිඩය ලබා ගැනීමට නොහැකි විය.";
             } catch (e) {
-                resBox.textContent = "සමාවන්න, මොහොතකින් නැවත උත්සාහ කරන්න.";
+                resBox.textContent = "සමාවන්න, මොහොතකින් නැවත උත්සාහ කරන්න. 💖";
             }
         };
 
@@ -1407,7 +1457,6 @@
                     document.getElementById('notificationText').textContent = d.parentNote;
                 }
                 loadFeed(d.grade, d.classGroup);
-                preLoadCuteAI();
             }
         }
 
