@@ -1,0 +1,478 @@
+import React, { useState, useEffect } from 'react';
+import { Star, Heart, Sparkles, Volume2, Check, X } from 'lucide-react';
+
+const PreschoolEnglishGame = () => {
+  const [currentGame, setCurrentGame] = useState('menu');
+  const [score, setScore] = useState(0);
+  const [celebration, setCelebration] = useState(false);
+
+  // Alphabet Game State
+  const [currentLetter, setCurrentLetter] = useState('A');
+  const [letterOptions, setLetterOptions] = useState([]);
+
+  // Color Game State
+  const [currentColor, setCurrentColor] = useState(null);
+  const [colorOptions, setColorOptions] = useState([]);
+
+  // Animal Game State
+  const [currentAnimal, setCurrentAnimal] = useState(null);
+  const [animalOptions, setAnimalOptions] = useState([]);
+
+  // Word Building Game State
+  const [targetWord, setTargetWord] = useState('');
+  const [availableLetters, setAvailableLetters] = useState([]);
+  const [selectedLetters, setSelectedLetters] = useState([]);
+
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  
+  const colors = [
+    { name: 'RED', color: '#FF6B6B', emoji: '🔴' },
+    { name: 'BLUE', color: '#4ECDC4', emoji: '🔵' },
+    { name: 'GREEN', color: '#95E1D3', emoji: '🟢' },
+    { name: 'YELLOW', color: '#FFE66D', emoji: '🟡' },
+    { name: 'ORANGE', color: '#FF9F43', emoji: '🟠' },
+    { name: 'PURPLE', color: '#A29BFE', emoji: '🟣' },
+  ];
+
+  const animals = [
+    { name: 'CAT', emoji: '🐱', sound: 'Meow!' },
+    { name: 'DOG', emoji: '🐶', sound: 'Woof!' },
+    { name: 'COW', emoji: '🐮', sound: 'Moo!' },
+    { name: 'PIG', emoji: '🐷', sound: 'Oink!' },
+    { name: 'DUCK', emoji: '🦆', sound: 'Quack!' },
+    { name: 'LION', emoji: '🦁', sound: 'Roar!' },
+    { name: 'FROG', emoji: '🐸', sound: 'Ribbit!' },
+    { name: 'BIRD', emoji: '🐦', sound: 'Tweet!' },
+  ];
+
+  const simpleWords = ['CAT', 'DOG', 'SUN', 'BEE', 'HAT', 'BAT', 'CUP', 'BUS'];
+
+  // Celebration effect
+  const celebrate = () => {
+    setCelebration(true);
+    setScore(prev => prev + 1);
+    setTimeout(() => setCelebration(false), 1500);
+  };
+
+  // Play sound effect (visual feedback)
+  const playSound = (correct) => {
+    // In a real app, you'd play actual audio
+    console.log(correct ? '✓ Correct!' : '✗ Try again!');
+  };
+
+  // Initialize Alphabet Game
+  const startAlphabetGame = () => {
+    const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+    setCurrentLetter(randomLetter);
+    
+    const options = [randomLetter];
+    while (options.length < 4) {
+      const randomOption = alphabet[Math.floor(Math.random() * alphabet.length)];
+      if (!options.includes(randomOption)) {
+        options.push(randomOption);
+      }
+    }
+    setLetterOptions(options.sort(() => Math.random() - 0.5));
+    setCurrentGame('alphabet');
+  };
+
+  // Initialize Color Game
+  const startColorGame = () => {
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    setCurrentColor(randomColor);
+    
+    const options = [randomColor];
+    while (options.length < 3) {
+      const randomOption = colors[Math.floor(Math.random() * colors.length)];
+      if (!options.find(o => o.name === randomOption.name)) {
+        options.push(randomOption);
+      }
+    }
+    setColorOptions(options.sort(() => Math.random() - 0.5));
+    setCurrentGame('colors');
+  };
+
+  // Initialize Animal Game
+  const startAnimalGame = () => {
+    const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+    setCurrentAnimal(randomAnimal);
+    
+    const options = [randomAnimal];
+    while (options.length < 4) {
+      const randomOption = animals[Math.floor(Math.random() * animals.length)];
+      if (!options.find(o => o.name === randomOption.name)) {
+        options.push(randomOption);
+      }
+    }
+    setAnimalOptions(options.sort(() => Math.random() - 0.5));
+    setCurrentGame('animals');
+  };
+
+  // Initialize Word Building Game
+  const startWordGame = () => {
+    const word = simpleWords[Math.floor(Math.random() * simpleWords.length)];
+    setTargetWord(word);
+    
+    const letters = word.split('');
+    const extraLetters = [];
+    while (extraLetters.length < 3) {
+      const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+      if (!letters.includes(randomLetter) && !extraLetters.includes(randomLetter)) {
+        extraLetters.push(randomLetter);
+      }
+    }
+    
+    setAvailableLetters([...letters, ...extraLetters].sort(() => Math.random() - 0.5));
+    setSelectedLetters([]);
+    setCurrentGame('words');
+  };
+
+  // Handle Alphabet Answer
+  const handleLetterClick = (letter) => {
+    if (letter === currentLetter) {
+      celebrate();
+      playSound(true);
+      setTimeout(startAlphabetGame, 1000);
+    } else {
+      playSound(false);
+    }
+  };
+
+  // Handle Color Answer
+  const handleColorClick = (color) => {
+    if (color.name === currentColor.name) {
+      celebrate();
+      playSound(true);
+      setTimeout(startColorGame, 1000);
+    } else {
+      playSound(false);
+    }
+  };
+
+  // Handle Animal Answer
+  const handleAnimalClick = (animal) => {
+    if (animal.name === currentAnimal.name) {
+      celebrate();
+      playSound(true);
+      setTimeout(startAnimalGame, 1000);
+    } else {
+      playSound(false);
+    }
+  };
+
+  // Handle Word Building
+  const handleLetterSelect = (letter, index) => {
+    setSelectedLetters([...selectedLetters, letter]);
+    setAvailableLetters(availableLetters.filter((_, i) => i !== index));
+  };
+
+  const handleLetterRemove = (index) => {
+    const letter = selectedLetters[index];
+    setAvailableLetters([...availableLetters, letter]);
+    setSelectedLetters(selectedLetters.filter((_, i) => i !== index));
+  };
+
+  const checkWord = () => {
+    if (selectedLetters.join('') === targetWord) {
+      celebrate();
+      playSound(true);
+      setTimeout(startWordGame, 1500);
+    } else {
+      playSound(false);
+      // Reset word
+      setAvailableLetters([...availableLetters, ...selectedLetters].sort(() => Math.random() - 0.5));
+      setSelectedLetters([]);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-300 via-purple-300 to-blue-300 p-4 relative overflow-hidden">
+      {/* Celebration Stars */}
+      {celebration && (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute animate-ping"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 0.5}s`,
+              }}
+            >
+              <Star className="text-yellow-400" fill="currentColor" size={24} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Score Badge */}
+      <div className="fixed top-4 right-4 bg-white rounded-full px-6 py-3 shadow-lg flex items-center gap-2 z-40">
+        <Star className="text-yellow-500" fill="currentColor" />
+        <span className="text-2xl font-bold text-purple-600">{score}</span>
+      </div>
+
+      {/* Menu Screen */}
+      {currentGame === 'menu' && (
+        <div className="max-w-4xl mx-auto text-center space-y-8 pt-12">
+          <div className="space-y-4">
+            <h1 className="text-6xl font-bold text-white drop-shadow-lg animate-bounce">
+              🎈 Learn English! 🎈
+            </h1>
+            <p className="text-2xl text-white font-semibold drop-shadow">
+              Fun Games for Little Learners!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
+            {/* Alphabet Game */}
+            <button
+              onClick={startAlphabetGame}
+              className="bg-gradient-to-br from-red-400 to-pink-500 hover:from-red-500 hover:to-pink-600 text-white p-8 rounded-3xl shadow-2xl transform hover:scale-105 transition-all"
+            >
+              <div className="text-6xl mb-4">🔤</div>
+              <div className="text-3xl font-bold">ABC Letters</div>
+              <div className="text-lg mt-2">Learn the Alphabet!</div>
+            </button>
+
+            {/* Color Game */}
+            <button
+              onClick={startColorGame}
+              className="bg-gradient-to-br from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white p-8 rounded-3xl shadow-2xl transform hover:scale-105 transition-all"
+            >
+              <div className="text-6xl mb-4">🎨</div>
+              <div className="text-3xl font-bold">Colors</div>
+              <div className="text-lg mt-2">Match the Colors!</div>
+            </button>
+
+            {/* Animal Game */}
+            <button
+              onClick={startAnimalGame}
+              className="bg-gradient-to-br from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white p-8 rounded-3xl shadow-2xl transform hover:scale-105 transition-all"
+            >
+              <div className="text-6xl mb-4">🐾</div>
+              <div className="text-3xl font-bold">Animals</div>
+              <div className="text-lg mt-2">Learn Animal Names!</div>
+            </button>
+
+            {/* Word Building Game */}
+            <button
+              onClick={startWordGame}
+              className="bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white p-8 rounded-3xl shadow-2xl transform hover:scale-105 transition-all"
+            >
+              <div className="text-6xl mb-4">📝</div>
+              <div className="text-3xl font-bold">Spell Words</div>
+              <div className="text-lg mt-2">Build Simple Words!</div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Alphabet Game */}
+      {currentGame === 'alphabet' && (
+        <div className="max-w-4xl mx-auto text-center space-y-8 pt-12">
+          <button
+            onClick={() => setCurrentGame('menu')}
+            className="bg-white px-6 py-3 rounded-full text-xl font-bold text-purple-600 shadow-lg hover:bg-gray-100"
+          >
+            ← Back to Menu
+          </button>
+
+          <div className="bg-white rounded-3xl p-12 shadow-2xl">
+            <h2 className="text-3xl font-bold text-purple-600 mb-8">
+              Find the Letter!
+            </h2>
+            
+            <div className="text-9xl font-bold text-blue-600 mb-12 animate-pulse">
+              {currentLetter}
+            </div>
+
+            <p className="text-2xl text-gray-700 mb-8 font-semibold">
+              Which letter is this? Click on it!
+            </p>
+
+            <div className="grid grid-cols-2 gap-6">
+              {letterOptions.map((letter, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleLetterClick(letter)}
+                  className="bg-gradient-to-br from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white text-6xl font-bold py-12 rounded-2xl shadow-lg transform hover:scale-110 transition-all"
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Color Game */}
+      {currentGame === 'colors' && (
+        <div className="max-w-4xl mx-auto text-center space-y-8 pt-12">
+          <button
+            onClick={() => setCurrentGame('menu')}
+            className="bg-white px-6 py-3 rounded-full text-xl font-bold text-purple-600 shadow-lg hover:bg-gray-100"
+          >
+            ← Back to Menu
+          </button>
+
+          <div className="bg-white rounded-3xl p-12 shadow-2xl">
+            <h2 className="text-3xl font-bold text-purple-600 mb-8">
+              Find the Color!
+            </h2>
+            
+            <div 
+              className="w-48 h-48 mx-auto rounded-3xl mb-8 shadow-xl animate-pulse"
+              style={{ backgroundColor: currentColor?.color }}
+            >
+              <div className="text-8xl pt-12">{currentColor?.emoji}</div>
+            </div>
+
+            <p className="text-3xl font-bold mb-8" style={{ color: currentColor?.color }}>
+              {currentColor?.name}
+            </p>
+
+            <p className="text-xl text-gray-700 mb-8 font-semibold">
+              Click on the word that matches!
+            </p>
+
+            <div className="grid grid-cols-1 gap-4">
+              {colorOptions.map((color, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleColorClick(color)}
+                  className="text-white text-3xl font-bold py-8 rounded-2xl shadow-lg transform hover:scale-105 transition-all"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${color.color}, ${color.color}dd)` 
+                  }}
+                >
+                  {color.emoji} {color.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Animal Game */}
+      {currentGame === 'animals' && (
+        <div className="max-w-4xl mx-auto text-center space-y-8 pt-12">
+          <button
+            onClick={() => setCurrentGame('menu')}
+            className="bg-white px-6 py-3 rounded-full text-xl font-bold text-purple-600 shadow-lg hover:bg-gray-100"
+          >
+            ← Back to Menu
+          </button>
+
+          <div className="bg-white rounded-3xl p-12 shadow-2xl">
+            <h2 className="text-3xl font-bold text-purple-600 mb-8">
+              What Animal is This?
+            </h2>
+            
+            <div className="text-9xl mb-6 animate-bounce">
+              {currentAnimal?.emoji}
+            </div>
+
+            <p className="text-2xl text-gray-600 mb-8 font-semibold italic">
+              "{currentAnimal?.sound}"
+            </p>
+
+            <p className="text-xl text-gray-700 mb-8 font-semibold">
+              Click on the correct name!
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              {animalOptions.map((animal, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnimalClick(animal)}
+                  className="bg-gradient-to-br from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white text-2xl font-bold py-8 rounded-2xl shadow-lg transform hover:scale-105 transition-all"
+                >
+                  {animal.emoji} {animal.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Word Building Game */}
+      {currentGame === 'words' && (
+        <div className="max-w-4xl mx-auto text-center space-y-8 pt-12">
+          <button
+            onClick={() => setCurrentGame('menu')}
+            className="bg-white px-6 py-3 rounded-full text-xl font-bold text-purple-600 shadow-lg hover:bg-gray-100"
+          >
+            ← Back to Menu
+          </button>
+
+          <div className="bg-white rounded-3xl p-12 shadow-2xl">
+            <h2 className="text-3xl font-bold text-purple-600 mb-8">
+              Spell the Word!
+            </h2>
+            
+            <p className="text-4xl font-bold text-blue-600 mb-8">
+              {targetWord}
+            </p>
+
+            {/* Word Building Area */}
+            <div className="bg-yellow-100 rounded-2xl p-8 mb-8 min-h-32">
+              <p className="text-xl text-gray-700 mb-4 font-semibold">Your Word:</p>
+              <div className="flex justify-center gap-3 flex-wrap">
+                {selectedLetters.length === 0 ? (
+                  <div className="text-gray-400 text-2xl">Click letters below...</div>
+                ) : (
+                  selectedLetters.map((letter, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleLetterRemove(index)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white text-4xl font-bold w-16 h-16 rounded-xl shadow-lg"
+                    >
+                      {letter}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Available Letters */}
+            <p className="text-xl text-gray-700 mb-4 font-semibold">
+              Click the letters to spell the word:
+            </p>
+            <div className="flex justify-center gap-3 mb-8 flex-wrap">
+              {availableLetters.map((letter, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleLetterSelect(letter, index)}
+                  className="bg-gradient-to-br from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white text-4xl font-bold w-16 h-16 rounded-xl shadow-lg transform hover:scale-110 transition-all"
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+
+            {selectedLetters.length > 0 && (
+              <button
+                onClick={checkWord}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-2xl font-bold px-12 py-4 rounded-full shadow-lg transform hover:scale-105 transition-all"
+              >
+                <Check className="inline mr-2" />
+                Check My Word!
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Decorative Elements */}
+      <div className="fixed bottom-4 left-4 text-6xl animate-bounce pointer-events-none">
+        🌟
+      </div>
+      <div className="fixed bottom-4 right-4 text-6xl animate-bounce pointer-events-none" style={{ animationDelay: '0.5s' }}>
+        🎈
+      </div>
+    </div>
+  );
+};
+
+export default PreschoolEnglishGame;
