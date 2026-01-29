@@ -604,15 +604,12 @@
         });
 
         function showInstallPopup() {
-            const hasSeenPopup = localStorage.getItem('installPopupShown');
-            
-            if (!hasSeenPopup && !installPopupShown) {
-                setTimeout(() => {
-                    const popup = document.getElementById('installPopup');
-                    popup.classList.add('show');
-                    installPopupShown = true;
-                }, 3000);
-            }
+            // Always show popup every time page loads
+            setTimeout(() => {
+                const popup = document.getElementById('installPopup');
+                popup.classList.add('show');
+                installPopupShown = true;
+            }, 3000);
         }
 
         window.handleInstall = async () => {
@@ -638,7 +635,7 @@
         window.closeInstallPopup = () => {
             const popup = document.getElementById('installPopup');
             popup.classList.remove('show');
-            localStorage.setItem('installPopupShown', 'true');
+            // Don't save to localStorage - popup will show again next time
         };
 
         function updateInstallPopupLanguage(lang) {
