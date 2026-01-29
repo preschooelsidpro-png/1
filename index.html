@@ -282,7 +282,6 @@
         .image-overlay img { max-width: 95%; max-height: 90%; border-radius: 8px; transform: scale(0.9); transition: transform 0.3s ease; }
         .image-overlay.active img { transform: scale(1); }
 
-        /* Add to Home Screen Button Styles */
         .install-btn-fixed {
             position: fixed;
             bottom: 20px;
@@ -312,21 +311,18 @@
             transform: translateY(-1px);
         }
 
-        /* Hide button on desktop/PC screens */
         @media (min-width: 768px) {
             .install-btn-fixed {
                 display: none;
             }
         }
 
-        /* Hide button on desktop/PC screens */
         @media (min-width: 769px) {
             .install-btn-fixed {
                 display: none !important;
             }
         }
 
-        /* Instruction Modal */
         .instruction-modal {
             position: fixed;
             top: 0;
@@ -407,6 +403,299 @@
         .close-instruction:hover {
             opacity: 0.9;
         }
+
+        /* ========== VIRTUAL PET SYSTEM STYLES ========== */
+        .pet-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 90%;
+            max-width: 500px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .pet-container.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .pet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .pet-header h2 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .close-pet {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close-pet:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .pet-display {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .pet-stats {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat span:first-child {
+            min-width: 100px;
+            font-weight: bold;
+        }
+
+        .stat-bar {
+            flex: 1;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .health-fill {
+            background: linear-gradient(90deg, #ff6b6b, #ee5a6f);
+        }
+
+        .hunger-fill {
+            background: linear-gradient(90deg, #ffa502, #ff6348);
+        }
+
+        .happiness-fill {
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+        }
+
+        .pet-character {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pet-character::before {
+            content: '✨';
+            position: absolute;
+            font-size: 30px;
+            animation: sparkle 2s infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: translate(-20px, -20px) rotate(0deg); }
+            50% { opacity: 1; transform: translate(20px, 20px) rotate(180deg); }
+        }
+
+        .pet-emoji {
+            font-size: 100px;
+            animation: petBounce 2s infinite;
+            display: inline-block;
+        }
+
+        @keyframes petBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .pet-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .pet-status {
+            color: white;
+            font-size: 16px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .pet-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .pet-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .pet-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .pet-btn:active {
+            transform: translateY(0);
+        }
+
+        .feed-btn {
+            background: linear-gradient(135deg, #ffa502, #ff6348);
+            color: white;
+        }
+
+        .play-pet-btn {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .heal-btn {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: white;
+        }
+
+        .evolve-btn {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+            color: white;
+        }
+
+        .pet-points {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            font-size: 18px;
+        }
+
+        .pet-points strong {
+            font-size: 24px;
+        }
+
+        .floating-pet-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+            cursor: pointer;
+            z-index: 9999;
+            transition: all 0.3s;
+            animation: petFloat 3s infinite;
+        }
+
+        @keyframes petFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating-pet-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.7);
+        }
+
+        .pet-icon {
+            font-size: 30px;
+            display: block;
+        }
+
+        .pet-notification {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 1s infinite;
+        }
+
+        .pet-notification.show {
+            display: flex;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes popUp {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -80%) scale(1.5); }
+            100% { transform: translate(-50%, -120%) scale(0); opacity: 0; }
+        }
+        
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .pet-container {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .pet-emoji {
+                font-size: 80px;
+            }
+            
+            .pet-actions {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -422,13 +711,80 @@
         </button>
     </div>
 
-    <!-- Add to Home Screen Button -->
     <button id="installBtn" class="install-btn-fixed" onclick="handleInstallClick()">
         <span>📱</span>
         <span id="installBtnText">Add to Home</span>
     </button>
 
-    <!-- Instruction Modal (for iOS/Safari and Desktop) -->
+    <!-- Virtual Pet Container -->
+    <div class="pet-container" id="petContainer">
+        <div class="pet-header">
+            <h2>🐾 My Virtual Pet</h2>
+            <button class="close-pet" onclick="closePet()">✖</button>
+        </div>
+        
+        <div class="pet-display">
+            <div class="pet-stats">
+                <div class="stat">
+                    <span>❤️ Health</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill health-fill" id="healthBar"></div>
+                    </div>
+                    <span id="healthValue">100</span>
+                </div>
+                <div class="stat">
+                    <span>🍔 Hunger</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill hunger-fill" id="hungerBar"></div>
+                    </div>
+                    <span id="hungerValue">100</span>
+                </div>
+                <div class="stat">
+                    <span>😊 Happiness</span>
+                    <div class="stat-bar">
+                        <div class="stat-fill happiness-fill" id="happinessBar"></div>
+                    </div>
+                    <span id="happinessValue">100</span>
+                </div>
+                <div class="stat">
+                    <span>⭐ Level</span>
+                    <strong id="petLevel">1</strong>
+                </div>
+            </div>
+            
+            <div class="pet-character" id="petCharacter">
+                <div class="pet-emoji" id="petEmoji">🐱</div>
+                <div class="pet-name" id="petName">Fluffy</div>
+                <div class="pet-status" id="petStatus">I'm happy! 😊</div>
+            </div>
+            
+            <div class="pet-actions">
+                <button class="pet-btn feed-btn" onclick="feedPet()">
+                    🍖 Feed<br><small>(10 points)</small>
+                </button>
+                <button class="pet-btn play-pet-btn" onclick="playWithPet()">
+                    🎮 Play<br><small>(15 points)</small>
+                </button>
+                <button class="pet-btn heal-btn" onclick="healPet()">
+                    💊 Heal<br><small>(20 points)</small>
+                </button>
+                <button class="pet-btn evolve-btn" onclick="evolvePet()">
+                    ✨ Evolve<br><small>(50 points)</small>
+                </button>
+            </div>
+            
+            <div class="pet-points">
+                <span>💰 Your Points: <strong id="userPoints">100</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Pet Button -->
+    <button class="floating-pet-btn" onclick="openPet()" title="My Pet">
+        <span class="pet-icon">🐱</span>
+        <span class="pet-notification" id="petNotification">!</span>
+    </button>
+
     <div id="instructionModal" class="instruction-modal" onclick="closeInstructionModal(event)">
         <div class="instruction-content" onclick="event.stopPropagation()">
             <div class="instruction-title">
@@ -436,7 +792,6 @@
                 <span id="instructionTitle">Home Screen එකට Add කරන්න</span>
             </div>
             
-            <!-- Mobile Instructions -->
             <div id="mobileInstructions">
                 <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-sub); font-size: 13px;">📱 Mobile:</div>
                 <div class="instruction-step">
@@ -453,7 +808,6 @@
                 </div>
             </div>
 
-            <!-- Desktop Instructions -->
             <div id="desktopInstructions" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
                 <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-sub); font-size: 13px;">💻 Desktop:</div>
                 <div class="instruction-step">
@@ -576,7 +930,215 @@
         let isStoryLoading = false;
         const geminiKey = "AIzaSyCjYCrnsAgzGZSdU7K8rht_sShq6EHoxvs";
 
-        // Install Button functionality
+        // ========== VIRTUAL PET SYSTEM ==========
+        let petData = {
+            name: 'Fluffy',
+            health: 100,
+            hunger: 100,
+            happiness: 100,
+            level: 1,
+            type: '🐱',
+            userPoints: 100
+        };
+
+        function loadPetData() {
+            const saved = localStorage.getItem('virtualPet');
+            if (saved) {
+                petData = JSON.parse(saved);
+            }
+            updatePetDisplay();
+            startPetTimer();
+        }
+
+        function savePetData() {
+            localStorage.setItem('virtualPet', JSON.stringify(petData));
+        }
+
+        function updatePetDisplay() {
+            document.getElementById('healthBar').style.width = petData.health + '%';
+            document.getElementById('healthValue').textContent = petData.health;
+            
+            document.getElementById('hungerBar').style.width = petData.hunger + '%';
+            document.getElementById('hungerValue').textContent = petData.hunger;
+            
+            document.getElementById('happinessBar').style.width = petData.happiness + '%';
+            document.getElementById('happinessValue').textContent = petData.happiness;
+            
+            document.getElementById('petLevel').textContent = petData.level;
+            document.getElementById('petEmoji').textContent = petData.type;
+            document.getElementById('petName').textContent = petData.name;
+            document.getElementById('userPoints').textContent = petData.userPoints;
+            
+            updatePetStatus();
+            checkPetHealth();
+        }
+
+        function updatePetStatus() {
+            const status = document.getElementById('petStatus');
+            
+            if (petData.health < 30 || petData.hunger < 30 || petData.happiness < 30) {
+                status.textContent = "I need help! 😢";
+                status.style.background = 'rgba(255,107,107,0.3)';
+                showNotification();
+            } else if (petData.health > 80 && petData.hunger > 80 && petData.happiness > 80) {
+                status.textContent = "I'm very happy! 😄";
+                status.style.background = 'rgba(67,233,123,0.3)';
+            } else {
+                status.textContent = "I'm doing okay! 😊";
+                status.style.background = 'rgba(255,255,255,0.2)';
+            }
+        }
+
+        function showNotification() {
+            document.getElementById('petNotification').classList.add('show');
+        }
+
+        function hideNotification() {
+            document.getElementById('petNotification').classList.remove('show');
+        }
+
+        window.feedPet = () => {
+            if (petData.userPoints >= 10) {
+                petData.userPoints -= 10;
+                petData.hunger = Math.min(100, petData.hunger + 30);
+                petData.health = Math.min(100, petData.health + 10);
+                
+                showPetAnimation('🍖', 'Yummy!');
+                updatePetDisplay();
+                savePetData();
+                earnPoints(5);
+            } else {
+                alert('Not enough points! 💰');
+            }
+        };
+
+        window.playWithPet = () => {
+            if (petData.userPoints >= 15) {
+                petData.userPoints -= 15;
+                petData.happiness = Math.min(100, petData.happiness + 40);
+                petData.hunger = Math.max(0, petData.hunger - 10);
+                
+                showPetAnimation('🎮', 'So fun!');
+                updatePetDisplay();
+                savePetData();
+                earnPoints(10);
+            } else {
+                alert('Not enough points! 💰');
+            }
+        };
+
+        window.healPet = () => {
+            if (petData.userPoints >= 20) {
+                petData.userPoints -= 20;
+                petData.health = 100;
+                
+                showPetAnimation('💊', 'Feeling better!');
+                updatePetDisplay();
+                savePetData();
+                earnPoints(15);
+            } else {
+                alert('Not enough points! 💰');
+            }
+        };
+
+        window.evolvePet = () => {
+            if (petData.userPoints >= 50 && petData.level < 5) {
+                petData.userPoints -= 50;
+                petData.level++;
+                
+                const pets = ['🐱', '🐶', '🐰', '🦊', '🐲'];
+                petData.type = pets[petData.level - 1];
+                
+                showPetAnimation('✨', 'Level Up!');
+                confetti();
+                updatePetDisplay();
+                savePetData();
+                earnPoints(30);
+            } else if (petData.level >= 5) {
+                alert('Max level reached! 🌟');
+            } else {
+                alert('Not enough points! Need 50 points. 💰');
+            }
+        };
+
+        function showPetAnimation(emoji, text) {
+            const petChar = document.getElementById('petCharacter');
+            const animation = document.createElement('div');
+            animation.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 60px;
+                animation: popUp 1s forwards;
+            `;
+            animation.textContent = emoji;
+            petChar.appendChild(animation);
+            
+            setTimeout(() => animation.remove(), 1000);
+        }
+
+        let petTimer;
+        function startPetTimer() {
+            clearInterval(petTimer);
+            petTimer = setInterval(() => {
+                petData.hunger = Math.max(0, petData.hunger - 1);
+                petData.happiness = Math.max(0, petData.happiness - 0.5);
+                
+                if (petData.hunger < 50) {
+                    petData.health = Math.max(0, petData.health - 0.5);
+                }
+                
+                updatePetDisplay();
+                savePetData();
+            }, 30000);
+        }
+
+        function checkPetHealth() {
+            if (petData.health <= 0) {
+                alert('Oh no! Your pet is very sick! Please heal it! 😢');
+                petData.health = 10;
+                updatePetDisplay();
+                savePetData();
+            }
+        }
+
+        function earnPoints(amount) {
+            petData.userPoints += amount;
+            savePetData();
+            updatePetDisplay();
+        }
+
+        window.openPet = () => {
+            document.getElementById('petContainer').classList.add('active');
+            hideNotification();
+        };
+
+        window.closePet = () => {
+            document.getElementById('petContainer').classList.remove('active');
+        };
+
+        function confetti() {
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.textContent = ['🎉', '✨', '🌟', '💫', '⭐'][Math.floor(Math.random() * 5)];
+                    confetti.style.cssText = `
+                        position: fixed;
+                        top: ${Math.random() * 100}%;
+                        left: ${Math.random() * 100}%;
+                        font-size: 30px;
+                        animation: fall 3s forwards;
+                        pointer-events: none;
+                        z-index: 10001;
+                    `;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 50);
+            }
+        }
+
+        // ========== ORIGINAL FUNCTIONS ==========
         let deferredPrompt;
 
         const installTranslations = {
@@ -615,7 +1177,6 @@
             }
         };
 
-        // Listen for the browser's install prompt
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -623,7 +1184,6 @@
 
         window.handleInstallClick = async () => {
             if (deferredPrompt) {
-                // Chrome/Android - Trigger native install prompt automatically
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 
@@ -632,7 +1192,6 @@
                 }
                 deferredPrompt = null;
             } else {
-                // iOS/Safari - Show instructions
                 document.getElementById('instructionModal').classList.add('show');
             }
         };
@@ -862,6 +1421,8 @@
                 const ad = snap.docs[0].data();
                 document.getElementById('attendanceStatus').textContent = translations[lang].present;
                 document.getElementById('attendanceTime').textContent = ad.time;
+                // Earn points for attendance
+                earnPoints(20);
             }
         }
 
@@ -913,9 +1474,9 @@
             loadStudent();
             loadAttendance();
             loadSettings();
+            loadPetData(); // Initialize pet system
         }
 
-        // Initialize button language
         updateInstallButtonLanguage('si');
     </script>
 </body>
